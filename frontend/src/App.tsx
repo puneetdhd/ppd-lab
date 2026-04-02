@@ -3,6 +3,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { RoleRoute } from './components/RoleRoute';
 import { AppLayout } from './components/layout/AppLayout';
 import { Login } from './pages/auth/Login';
+import { Register } from './pages/auth/Register';
 
 // Mock empty pages for initial routing outline
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -16,6 +17,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/" element={<Navigate to="/login" replace />} />
 
       {/* Protected Routes Wrapper */}

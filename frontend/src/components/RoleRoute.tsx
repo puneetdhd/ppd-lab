@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth, Role } from '../context/AuthContext';
+import { useAuth, type Role } from '../context/AuthContext';
 
 interface RoleRouteProps {
   allowedRoles: Role[];

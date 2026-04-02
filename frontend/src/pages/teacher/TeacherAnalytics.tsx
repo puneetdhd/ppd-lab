@@ -1,118 +1,99 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { useApi } from '../../hooks/useApi';
-import { Loader2, PieChart as PieChartIcon } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
+  PieChart, Pie, Cell, Legend, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from 'recharts';
 
+const COLORS = ['#7c3aed', '#009ef7', '#50cd89', '#ffc700', '#f1416c', '#a78bfa', '#fb923c'];
+
 export const TeacherAnalytics: React.FC = () => {
-  const { data: analysisData, loading, error } = useApi<any[]>('/analysis/teacher');
+  const { data, loading, error } = useApi<any[]>('/analysis/my');
 
-  if (loading) {
-    return <div className="flex h-64 items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-  }
+  if (loading) return <div className="flex items-center justify-center h-64"><Loader2 size={28} className="animate-spin" style={{ color: 'var(--accent)' }} /></div>;
+  if (error)   return <div className="p-4 rounded-xl text-sm" style={{ background: 'var(--danger-light)', color: 'var(--danger)' }}>{error}</div>;
+  if (!data?.length) return <div className="text-center py-16" style={{ color: 'var(--text-muted)' }}>No analytics data yet. Please enter marks first.</div>;
 
-  if (error) {
-    return <div className="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>;
-  }
-
-  if (!analysisData || analysisData.length === 0) {
-    return <div className="text-slate-500 text-center mt-10">No analytics data available. Assure marks are entered for your assignments.</div>;
-  }
-
-  // Use the first assignment's data for the detailed view, or summarize. 
-  // For UI demonstration we'll just map the assignments cleanly.
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Class Analytics</h1>
-        <p className="text-sm text-slate-500 mt-1">Performance breakdown for your assigned cohorts</p>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Class Analytics</h1>
+          <div className="page-breadcrumb">Home / Teacher / <span>Analytics</span></div>
+        </div>
       </div>
 
-      {analysisData.map((analysis, index) => {
-        // Transform the grade record into an array for Recharts
-        const gradeChartData = Object.keys(analysis.grade_distribution).map((grade) => ({
-          name: grade,
-          value: analysis.grade_distribution[grade]
-        })).filter(d => d.value > 0);
-
-        const COLORS = ['#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308'];
+      {data.map((analysis: any, idx: number) => {
+        const gradeData = Object.entries(analysis.grade_distribution || {})
+          .filter(([, v]) => Number(v) > 0)
+          .map(([name, value]) => ({ name, value: Number(value) }));
 
         const bucketData = [
-          { name: '>90% (Outstanding)', value: analysis.above_90, fill: '#10b981' },
-          { name: '50-90% (Passing)', value: analysis.between_50_90, fill: '#3b82f6' },
-          { name: '<50% (Failing)', value: analysis.failed, fill: '#ef4444' }
+          { name: 'Outstanding (>90%)', value: analysis.above_90 || 0, fill: '#50cd89' },
+          { name: 'Passing (50-90%)',   value: analysis.between_50_90 || 0, fill: '#009ef7' },
+          { name: 'Failed (<50%)',      value: analysis.failed || 0, fill: '#f1416c' },
         ].filter(d => d.value > 0);
 
         return (
-          <div key={index} className="space-y-6 bg-slate-50/50 dark:bg-slate-800/30 p-6 rounded-2xl border border-border">
-            <div className="flex justify-between items-center bg-white dark:bg-card p-4 rounded-xl shadow-sm border border-border">
+          <div key={idx}>
+            {/* Subject Header */}
+            <div className="card p-5 mb-5 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white text-primary">{analysis.subject}</h3>
-                <p className="text-sm text-slate-500">{analysis.batch} • Sem {analysis.semester}</p>
+                <div className="text-lg font-bold" style={{ color: 'var(--accent)' }}>{analysis.subject}</div>
+                <div className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                  {analysis.batch} · Semester {analysis.semester}
+                </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-slate-500">Average Total</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{analysis.average_total} / 100</p>
+                <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Class Average</div>
+                <div className="text-3xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
+                  {analysis.average_total?.toFixed(1)}<span className="text-base font-medium text-gray-400"> / 100</span>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center"><PieChartIcon className="w-5 h-5 mr-2 text-slate-400" /> Grade Distribution</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-72 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={gradeChartData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={100}
-                          innerRadius={60}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {gradeChartData.map((entry, idx) => (
-                            <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Grade Distribution Pie */}
+              <div className="card p-6">
+                <div className="font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Grade Distribution</div>
+                {gradeData.length === 0 ? (
+                  <div className="flex items-center justify-center h-48" style={{ color: 'var(--text-muted)' }}>No grade data yet</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <PieChart>
+                      <Pie data={gradeData} cx="50%" cy="50%" innerRadius={60} outerRadius={95}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
+                        labelLine={false}>
+                        {gradeData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Performance Buckets</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-72 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={bucketData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} allowDecimals={false} />
-                        <Tooltip cursor={{fill: '#f8fafc'}} />
-                        <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={40}>
-                           {bucketData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Performance Buckets Bar */}
+              <div className="card p-6">
+                <div className="font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Performance Buckets</div>
+                {bucketData.length === 0 ? (
+                  <div className="flex items-center justify-center h-48" style={{ color: 'var(--text-muted)' }}>No bucket data yet</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={bucketData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} allowDecimals={false} />
+                      <Tooltip />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={48} name="Students">
+                        {bucketData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </div>
           </div>
         );

@@ -1,50 +1,60 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Search, Bell, Sun, Moon, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { Search, Bell, MessageSquare, ChevronDown, Moon, Sun } from 'lucide-react';
 
 export const TopBar: React.FC = () => {
   const { user } = useAuth();
+  const [dark, setDark] = useState(document.documentElement.classList.contains('dark'));
 
-  // Basic theme toggle (would need external state/context for real app)
-  const toggleDark = () => {
-    document.documentElement.classList.toggle('dark');
+  const toggleTheme = () => {
+    const isDark = !dark;
+    setDark(isDark);
+    document.documentElement.classList.toggle('dark', isDark);
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
   };
 
   return (
-    <header className="h-20 bg-background/50 backdrop-blur-sm border-b border-border flex items-center justify-between px-8 sticky top-0 z-10 w-full">
-      <div className="flex-1 flex items-center">
-        <div className="relative w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="What do you want to find?"
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border-none rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm transition-shadow"
-          />
-        </div>
+    <header
+      className="flex items-center gap-4 px-8 h-[72px] shrink-0 sticky top-0 z-30"
+      style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)' }}
+    >
+      {/* Search */}
+      <div className="search-box flex-1 max-w-sm">
+        <Search className="search-icon" />
+        <input
+          className="form-input"
+          style={{ paddingLeft: 36 }}
+          placeholder="What do you want to find?"
+        />
       </div>
 
-      <div className="flex items-center space-x-6">
-        <button onClick={toggleDark} className="text-slate-400 hover:text-primary transition-colors">
-          <Moon className="w-5 h-5 hidden dark:block" />
-          <Sun className="w-5 h-5 block dark:hidden" />
+      <div className="flex-1" />
+
+      {/* Actions */}
+      <div className="flex items-center gap-2">
+        <button onClick={toggleTheme} className="btn btn-ghost btn-icon">
+          {dark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
-        <button className="relative text-slate-400 hover:text-primary transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+        <button className="btn btn-ghost btn-icon relative">
+          <Bell size={18} />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-danger border-2 border-white dark:border-[var(--bg-card)]" />
         </button>
-        <button className="text-slate-400 hover:text-primary transition-colors">
-          <MessageSquare className="w-5 h-5" />
+        <button className="btn btn-ghost btn-icon">
+          <MessageSquare size={18} />
         </button>
-        
-        <div className="flex items-center space-x-3 pl-4 border-l border-border cursor-pointer group">
-          <div className="flex flex-col items-end">
-            <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{user?.name || 'User'}</span>
-            <span className="text-xs text-slate-500 capitalize">{user?.role || 'Guest'}</span>
+
+        {/* Profile */}
+        <div className="flex items-center gap-3 pl-3 ml-1 cursor-pointer"
+          style={{ borderLeft: '1px solid var(--border)' }}>
+          <div className="text-right">
+            <div className="text-sm font-semibold leading-tight" style={{ color: 'var(--text-primary)' }}>
+              {user?.name}
+            </div>
+            <div className="text-xs capitalize" style={{ color: 'var(--text-muted)' }}>{user?.role}</div>
           </div>
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold overflow-hidden border border-primary/20">
-            {user?.name?.charAt(0) || 'U'}
+          <div className="avatar avatar-md text-sm font-bold">
+            {user?.name?.charAt(0).toUpperCase()}
           </div>
-          <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-primary transition-colors" />
         </div>
       </div>
     </header>

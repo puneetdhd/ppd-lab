@@ -1,153 +1,219 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '../../components/ui/Card';
-import { Search, Loader2, Edit, Trash2, CheckCircle2 } from 'lucide-react';
+import { useApi } from '../../hooks/useApi';
 import api from '../../api/axios';
+import { Plus, Loader2, Search, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
-// Interfaces based on backend models
-interface Student {
-  _id: string;
-  user_id: { _id: string; name: string; email: string };
-  batch_id: string;
-  semester: number;
-}
+const GRADE_COLORS: Record<string, string> = {
+  O: 'badge-success', E: 'badge-info', A: 'badge-accent',
+  B: 'badge-warning', C: 'badge-warning', D: 'badge-warning',
+  F: 'badge-danger',
+};
 
-interface Mark {
-  _id: string;
-  student_id: Student;
-  assignment_id: string;
-  mid: number;
-  quiz: number;
-  assignment: number;
-  attendance: number;
-  total: number;
-  grade: string;
-}
+const PAGE_SIZE = 10;
 
 export const TeacherMarks: React.FC = () => {
-  const [marks, setMarks] = useState<Mark[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: assignments, loading: aLoading } = useApi<any[]>('/assignments/my/assignments');
+  const [selectedAssignment, setSelectedAssignment] = useState('');
+  const [marks, setMarks]   = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [page, setPage]     = useState(1);
+  const [showModal, setModal] = useState(false);
+  const [students, setStudents] = useState<any[]>([]);
+  const [form, setForm] = useState({ student_id: '', mid: 0, quiz: 0, assignment: 0, attendance: 0 });
+  const [saving, setSaving] = useState(false);
 
-  // Mock fetching marks for a specific given assignment
-  // For UI testing, we will mock API if it fails, or show what we get.
+  const fetchMarks = async (assignmentId: string) => {
+    setLoading(true);
+    try {
+      const res = await api.get(`/marks/assignment/${assignmentId}`);
+      setMarks(res.data.data || []);
+    } catch { setMarks([]); }
+    finally { setLoading(false); }
+  };
+
   useEffect(() => {
-    // In a real flow, the teacher selects an assignment first. 
-    // Here we'll try to fetch any marks they are associated with (would need a specific route, or we mock)
-    // We'll use mock data for the UI demonstration matched to the inspiration image
-    setTimeout(() => {
-      setMarks([
-        { _id: '1', student_id: { _id: 's1', user_id: { _id: 'u1', name: 'Eleanor Pena', email: 'e@p.com' }, batch_id: 'b1', semester: 1 }, assignment_id: 'a1', mid: 50, quiz: 10, assignment: 12, attendance: 8, total: 80, grade: 'E' },
-        { _id: '2', student_id: { _id: 's2', user_id: { _id: 'u2', name: 'Jessia Rose', email: 'j@r.com' }, batch_id: 'b1', semester: 1 }, assignment_id: 'a1', mid: 58, quiz: 14, assignment: 15, attendance: 10, total: 97, grade: 'O' },
-        { _id: '3', student_id: { _id: 's3', user_id: { _id: 'u3', name: 'Jenny Wilson', email: 'j@w.com' }, batch_id: 'b1', semester: 1 }, assignment_id: 'a1', mid: 40, quiz: 12, assignment: 10, attendance: 7, total: 69, grade: 'B' },
-        { _id: '4', student_id: { _id: 's4', user_id: { _id: 'u4', name: 'Guy Hawkins', email: 'g@h.com' }, batch_id: 'b1', semester: 1 }, assignment_id: 'a1', mid: 25, quiz: 5, assignment: 8, attendance: 4, total: 42, grade: 'D' },
-        { _id: '5', student_id: { _id: 's5', user_id: { _id: 'u5', name: 'Jacob Jones', email: 'j@j.com' }, batch_id: 'b1', semester: 1 }, assignment_id: 'a1', mid: 30, quiz: 8, assignment: 9, attendance: 6, total: 53, grade: 'C' },
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    if (selectedAssignment) fetchMarks(selectedAssignment);
+    else setMarks([]);
+  }, [selectedAssignment]);
+
+  // Load students for selected batch when opening modal
+  const openModal = async () => {
+    const asn = assignments?.find(a => a._id === selectedAssignment);
+    if (asn?.batch_id?._id) {
+      try {
+        const res = await api.get(`/students/batch/${asn.batch_id._id}`);
+        setStudents(res.data.data || []);
+      } catch { setStudents([]); }
+    }
+    setModal(true);
+  };
+
+  const handleSaveMark = async (e: React.FormEvent) => {
+    e.preventDefault(); setSaving(true);
+    try {
+      await api.post('/marks', { ...form, assignment_id: selectedAssignment });
+      setModal(false);
+      setForm({ student_id: '', mid: 0, quiz: 0, assignment: 0, attendance: 0 });
+      fetchMarks(selectedAssignment);
+    } catch (err: any) { alert(err.response?.data?.message || 'Failed to save mark'); }
+    finally { setSaving(false); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this mark?')) return;
+    try { await api.delete(`/marks/${id}`); fetchMarks(selectedAssignment); }
+    catch { alert('Failed.'); }
+  };
+
+  const filtered = marks.filter(m =>
+    m.student_id?.user_id?.name?.toLowerCase().includes(search.toLowerCase())
+  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Student Marks List</h1>
-          <p className="text-sm text-slate-500 mt-1">Home / Teacher / Marks</p>
+          <h1 className="page-title">Student Marks List</h1>
+          <div className="page-breadcrumb">Home / Teacher / <span>Marks</span></div>
         </div>
-        <button className="bg-primary hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm shadow-primary/20 flex items-center">
-          <span className="mr-2 text-lg leading-none">+</span> Enter Mark
-        </button>
+        {selectedAssignment && (
+          <button className="btn btn-primary" onClick={openModal} disabled={!selectedAssignment}>
+            <Plus size={16} /> Enter Mark
+          </button>
+        )}
       </div>
 
-      <Card className="shadow-sm border-0 border-t-2 border-t-primary rounded-t-xl overflow-hidden mt-6">
-        <div className="flex justify-between items-center p-6 border-b border-border">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Students Information</h3>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <input 
-                type="text" 
-                placeholder="Search by name..."
-                className="pl-4 pr-10 py-1.5 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary w-64"
-              />
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      {/* Assignment picker */}
+      <div className="card p-5">
+        <label className="form-label">Select Assignment / Subject</label>
+        {aLoading ? (
+          <div className="flex items-center gap-2 mt-1" style={{ color: 'var(--text-muted)' }}><Loader2 size={16} className="animate-spin" /> Loading assignments…</div>
+        ) : (
+          <select
+            className="form-input"
+            style={{ maxWidth: 480 }}
+            value={selectedAssignment}
+            onChange={e => { setSelectedAssignment(e.target.value); setPage(1); }}
+          >
+            <option value="">-- Select an assignment --</option>
+            {(assignments || []).map((a: any) => (
+              <option key={a._id} value={a._id}>
+                {a.subject_id?.subject_name} — {a.batch_id?.branch_id?.branch_name} (Sem {a.semester})
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {selectedAssignment && (
+        <div className="card">
+          <div className="flex items-center justify-between px-6 py-4 gap-4 flex-wrap"
+            style={{ borderBottom: '1px solid var(--border)' }}>
+            <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Students Information</div>
+            <div className="flex items-center gap-3">
+              <div className="search-box">
+                <Search className="search-icon" size={16} />
+                <input className="form-input" style={{ paddingLeft: 34, width: 220 }} placeholder="Search by name"
+                  value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+              </div>
             </div>
-            <select className="bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm py-1.5 px-3 focus:outline-none focus:ring-1 focus:ring-primary text-slate-600 dark:text-slate-300">
-              <option>Object Oriented Prog</option>
-              <option>Database Management</option>
-            </select>
+          </div>
+
+          <div className="overflow-x-auto">
+            {loading ? (
+              <div className="flex items-center justify-center py-16"><Loader2 size={28} className="animate-spin" style={{ color: 'var(--accent)' }} /></div>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th><input type="checkbox" className="rounded" /></th>
+                    <th>Students Name</th>
+                    <th>Mid (60)</th><th>Quiz (15)</th><th>Assg (15)</th><th>Attn (10)</th>
+                    <th>Total / Grade</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paged.length === 0 && (
+                    <tr><td colSpan={8} className="text-center py-12" style={{ color: 'var(--text-muted)' }}>No marks entered yet. Click "Enter Mark" to add.</td></tr>
+                  )}
+                  {paged.map((m: any) => (
+                    <tr key={m._id}>
+                      <td><input type="checkbox" className="rounded" /></td>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="avatar avatar-sm text-xs">{m.student_id?.user_id?.name?.charAt(0) || 'S'}</div>
+                          <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{m.student_id?.user_id?.name || '—'}</span>
+                        </div>
+                      </td>
+                      <td>{m.mid}</td><td>{m.quiz}</td><td>{m.assignment}</td><td>{m.attendance}</td>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{m.total}</span>
+                          <span className={`badge ${GRADE_COLORS[m.grade] || 'badge-muted'}`}>{m.grade}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex gap-2">
+                          <button className="btn btn-ghost btn-icon btn-sm" onClick={() => handleDelete(m._id)}><Trash2 size={15} style={{ color: 'var(--danger)' }} /></button>
+                          <button className="btn btn-ghost btn-icon btn-sm"><Edit size={15} style={{ color: 'var(--info)' }} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: '1px solid var(--border)' }}>
+            <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              {filtered.length} record{filtered.length !== 1 ? 's' : ''}
+            </div>
+            <div className="flex items-center gap-1">
+              <button className="page-btn" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}><ChevronLeft size={16} /></button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(n => (
+                <button key={n} className={`page-btn ${page === n ? 'active' : ''}`} onClick={() => setPage(n)}>{n}</button>
+              ))}
+              <button className="page-btn" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}><ChevronRight size={16} /></button>
+            </div>
           </div>
         </div>
+      )}
 
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-slate-500 uppercase bg-slate-50/50 dark:bg-slate-800/50 border-b border-border">
-                <tr>
-                  <th className="px-6 py-4 font-medium flex items-center">
-                    <input type="checkbox" className="rounded border-slate-300 text-primary focus:ring-primary mr-3" />
-                    STUDENT NAME
-                  </th>
-                  <th className="px-6 py-4 font-medium">MID (60)</th>
-                  <th className="px-6 py-4 font-medium">QUIZ (15)</th>
-                  <th className="px-6 py-4 font-medium">ASSG (15)</th>
-                  <th className="px-6 py-4 font-medium">ATTN (10)</th>
-                  <th className="px-6 py-4 font-medium">TOTAL / GRADE</th>
-                  <th className="px-6 py-4 font-medium">ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-slate-500">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
-                    </td>
-                  </tr>
-                ) : marks.map((mark, idx) => (
-                  <tr key={mark._id} className="table-row-hover border-b border-slate-100 dark:border-slate-800/50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <input type="checkbox" className="rounded border-slate-300 text-primary focus:ring-primary mr-3" defaultChecked={idx === 1} />
-                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center mr-3">
-                          {mark.student_id.user_id.name.charAt(0)}
-                        </div>
-                        <div className="font-medium text-slate-900 dark:text-slate-100">
-                          {mark.student_id.user_id.name}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{mark.mid}</td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{mark.quiz}</td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{mark.assignment}</td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{mark.attendance}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-semibold">{mark.total}</span>
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium 
-                          ${mark.grade === 'F' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                          {mark.grade}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3 text-slate-400">
-                        <button className="hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
-                        <button className="hover:text-blue-500 transition-colors"><Edit className="w-4 h-4" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* Enter mark modal */}
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="font-bold" style={{ color: 'var(--text-primary)' }}>Enter Student Mark</div>
+              <button className="btn btn-ghost btn-icon" onClick={() => setModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleSaveMark}>
+              <div className="modal-body space-y-4">
+                <div><label className="form-label">Student</label>
+                  <select className="form-input" required value={form.student_id} onChange={e => setForm({ ...form, student_id: e.target.value })}>
+                    <option value="">Select student</option>
+                    {students.map((s: any) => <option key={s._id} value={s._id}>{s.user_id?.name}</option>)}
+                  </select></div>
+                <div className="grid grid-cols-2 gap-4">
+                  {([['mid', 60], ['quiz', 15], ['assignment', 15], ['attendance', 10]] as [keyof typeof form, number][]).map(([field, max]) => (
+                    <div key={field}><label className="form-label capitalize">{field} (max {max})</label>
+                      <input type="number" min={0} max={max} className="form-input" required value={form[field]} onChange={e => setForm({ ...form, [field]: Number(e.target.value) })} /></div>
+                  ))}
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-outline" onClick={() => setModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? <Loader2 size={14} className="animate-spin" /> : 'Save Mark'}</button>
+              </div>
+            </form>
           </div>
-          <div className="flex items-center justify-center py-4 space-x-1 border-t border-border">
-            <button className="w-8 h-8 flex items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">&lt;</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-md bg-primary text-white font-medium shadow-sm">1</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800">2</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800">3</button>
-            <span className="px-2 text-slate-400">...</span>
-            <button className="w-8 h-8 flex items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800">10</button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">&gt;</button>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   );
 };

@@ -4,28 +4,29 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import { Eye, EyeOff, Loader2, Mail } from 'lucide-react';
 
-export const Login: React.FC = () => {
+export const Register: React.FC = () => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'student' | 'teacher'>('student');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/register', { name, email, password, role });
       const { token, user } = res.data.data;
       login(token, user);
-      if (user.role === 'admin')   navigate('/admin');
-      else if (user.role === 'teacher') navigate('/teacher');
+      if (user.role === 'teacher') navigate('/teacher');
       else navigate('/student');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid credentials.');
+      setError(err.response?.data?.message || 'Registration failed.');
     } finally {
       setLoading(false);
     }
@@ -44,16 +45,44 @@ export const Login: React.FC = () => {
 
       {/* Header */}
       <h1 className="text-[44px] font-bold text-gray-900 mb-8 max-w-[280px] text-center leading-[1.15]">
-        Welcome back
+        Create account
       </h1>
 
-      <form onSubmit={handleLogin} className="w-full max-w-[420px] space-y-5">
+      <form onSubmit={handleRegister} className="w-full max-w-[420px] space-y-5">
         {error && (
           <div className="bg-red-50 text-red-600 px-5 py-3 rounded-xl text-base text-center font-medium">
             {error}
           </div>
         )}
+        
+        {/* Role Switcher */}
+        <div className="flex p-1 bg-gray-100 rounded-full mb-2">
+          <button
+            type="button"
+            onClick={() => setRole('student')}
+            className={`flex-1 py-3 text-[15px] font-bold rounded-full transition-colors ${role === 'student' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            I'm a Student
+          </button>
+          <button
+            type="button"
+            onClick={() => setRole('teacher')}
+            className={`flex-1 py-3 text-[15px] font-bold rounded-full transition-colors ${role === 'teacher' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            I'm a Teacher
+          </button>
+        </div>
 
+        <div>
+          <input
+            type="text"
+            required
+            placeholder="Full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-6 py-4 rounded-full border border-gray-200 text-base focus:outline-none focus:border-[#9dce58] focus:ring-2 focus:ring-[#9dce58]/20 transition-all font-medium placeholder:text-gray-400"
+          />
+        </div>
         <div>
           <input
             type="email"
@@ -87,12 +116,12 @@ export const Login: React.FC = () => {
           disabled={loading}
           className="w-full bg-[#9dce58] hover:bg-[#8cc63e] text-gray-900 font-bold py-4 rounded-full mt-4 transition-colors flex items-center justify-center text-[17px] shadow-sm"
         >
-          {loading ? <Loader2 size={24} className="animate-spin" /> : 'Log in'}
+          {loading ? <Loader2 size={24} className="animate-spin" /> : 'Create account'}
         </button>
       </form>
 
       <div className="w-full max-w-[420px] mt-10 text-center">
-        <div className="text-gray-400 text-sm font-medium mb-6">or log in with</div>
+        <div className="text-gray-400 text-sm font-medium mb-6">or sign up with</div>
         <div className="flex items-center justify-center gap-5">
           <button className="w-[54px] h-[54px] rounded-full bg-[#f4faeb] hover:bg-[#e7f4d4] flex items-center justify-center text-gray-900 transition-colors shadow-sm">
             <span className="font-bold text-xl">G</span>
@@ -112,14 +141,14 @@ export const Login: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mt-10 -mb-2 opacity-50 hover:opacity-100 transition-opacity">
-          <button type="button" onClick={() => { setEmail('admin@ppd.edu'); setPassword('admin123'); }} className="text-xs bg-gray-100 py-2.5 rounded-lg font-bold uppercase tracking-wider text-gray-500 hover:bg-gray-200">Admin Demo</button>
-          <button type="button" onClick={() => { setEmail('ramesh@ppd.edu'); setPassword('teacher123'); }} className="text-xs bg-gray-100 py-2.5 rounded-lg font-bold uppercase tracking-wider text-gray-500 hover:bg-gray-200">Teacher Demo</button>
-        </div>
+        <p className="text-[13px] font-medium text-gray-400 mt-10 mb-14 leading-relaxed px-4">
+          By creating an account you agree to ia Academy's <br/>
+          <a href="#" className="text-[#8cc63e] hover:underline">Terms of Services</a> and <a href="#" className="text-[#8cc63e] hover:underline">Privacy Policy</a>.
+        </p>
       </div>
 
       <div className="mt-auto pb-8 text-[15px] font-medium text-gray-500">
-        Don't have an account? <Link to="/register" className="text-[#8cc63e] hover:underline ml-1 font-bold">Sign up</Link>
+        Have an account? <Link to="/login" className="text-[#8cc63e] hover:underline ml-1 font-bold">Log in</Link>
       </div>
     </div>
   );

@@ -1,156 +1,175 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Users, GraduationCap, Building2, BookOpen, Clock } from 'lucide-react';
-import { 
+import { useApi } from '../../hooks/useApi';
+import { Users, GraduationCap, BookOpen, ClipboardList, TrendingUp, TrendingDown } from 'lucide-react';
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line
+  LineChart, Line, AreaChart, Area
 } from 'recharts';
 
-// Mock data (would fetch from API in real implementation)
-const enrollmentData = [
-  { name: 'Jan', students: 400 }, { name: 'Feb', students: 300 },
-  { name: 'Mar', students: 500 }, { name: 'Apr', students: 280 },
-  { name: 'May', students: 590 }, { name: 'Jun', students: 800 },
+const DUMMY_ENROLL = [
+  { m: 'Jan', n: 320 }, { m: 'Feb', n: 280 }, { m: 'Mar', n: 450 },
+  { m: 'Apr', n: 390 }, { m: 'May', n: 520 }, { m: 'Jun', n: 610 },
+  { m: 'Jul', n: 580 }, { m: 'Aug', n: 690 }, { m: 'Sep', n: 720 },
+  { m: 'Oct', n: 750 }, { m: 'Nov', n: 810 }, { m: 'Dec', n: 870 },
+];
+const DUMMY_ACTIVITY = [
+  { d: 'Mon', v: 40 }, { d: 'Tue', v: 55 }, { d: 'Wed', v: 48 },
+  { d: 'Thu', v: 70 }, { d: 'Fri', v: 62 }, { d: 'Sat', v: 30 }, { d: 'Sun', v: 20 },
 ];
 
-const performanceData = [
-  { batch: 'IT 2024', passRate: 85 },
-  { batch: 'CSE 2024', passRate: 92 },
-  { batch: 'ECE 2024', passRate: 78 },
-  { batch: 'IT 2023', passRate: 88 },
-];
+interface StatCard {
+  label: string;
+  value: string;
+  delta: string;
+  up: boolean;
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+}
 
 export const AdminDashboard: React.FC = () => {
+  const { data: students } = useApi<any[]>('/students');
+  const { data: teachers }  = useApi<any[]>('/teachers');
+  const { data: assignments } = useApi<any[]>('/assignments');
+
+  const stats: StatCard[] = [
+    {
+      label: 'Total Students', value: students?.length?.toString() ?? '—',
+      delta: '+12%', up: true, icon: GraduationCap, color: '#009ef7', bg: '#f1faff',
+    },
+    {
+      label: 'Total Teachers', value: teachers?.length?.toString() ?? '—',
+      delta: '+3.4%', up: true, icon: Users, color: '#7c3aed', bg: '#f4f0ff',
+    },
+    {
+      label: 'Assignments', value: assignments?.length?.toString() ?? '—',
+      delta: '+8', up: true, icon: ClipboardList, color: '#50cd89', bg: '#e8fff3',
+    },
+    {
+      label: 'Month Avg Grade', value: '78%',
+      delta: '-2.1%', up: false, icon: BookOpen, color: '#ffc700', bg: '#fff8dd',
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-end">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Admin Analytics</h1>
-          <p className="text-sm text-slate-500 mt-1">Overview of academy management</p>
+          <h1 className="page-title">Analytics</h1>
+          <div className="page-breadcrumb">Home / <span>Dashboard</span></div>
         </div>
-        <div className="flex items-center space-x-2 bg-white dark:bg-slate-800 border border-border px-3 py-1.5 rounded-lg text-sm font-medium">
-          <Clock className="w-4 h-4 text-slate-400 mr-2" />
-          <span>Spring Semester 2026</span>
+        <div className="flex items-center gap-2 text-sm px-4 py-2 rounded-xl"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+          Spring Semester 2026
         </div>
       </div>
 
-      {/* KPI Stats Row identical to inspiration's top row cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between space-x-4">
+      {/* KPI Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+        {stats.map(s => {
+          const Icon = s.icon;
+          return (
+            <div key={s.label} className="stat-card">
               <div>
-                <p className="text-sm font-medium text-slate-500">Total Students</p>
-                <div className="flex items-baseline space-x-2 mt-2">
-                  <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">4,890</h2>
-                  <span className="text-xs font-medium text-emerald-500 flex items-center">
-                    ↑ 12% <span className="text-slate-400 ml-1 font-normal">vs last month</span>
-                  </span>
+                <div className="text-sm mb-2" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
+                <div className="text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{s.value}</div>
+                <div className="flex items-center gap-1 text-xs font-semibold">
+                  {s.up ? <TrendingUp size={12} style={{ color: 'var(--success)' }} /> : <TrendingDown size={12} style={{ color: 'var(--danger)' }} />}
+                  <span style={{ color: s.up ? 'var(--success)' : 'var(--danger)' }}>{s.delta}</span>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>vs last month</span>
                 </div>
               </div>
-              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-xl flex justify-center items-center">
-                <GraduationCap className="w-6 h-6" />
+              <div className="icon-box rounded-2xl" style={{ background: s.bg, color: s.color, width: 52, height: 52 }}>
+                <Icon size={24} />
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between space-x-4">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Total Teachers</p>
-                <div className="flex items-baseline space-x-2 mt-2">
-                  <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">142</h2>
-                  <span className="text-xs font-medium text-emerald-500 flex items-center">
-                    ↑ 3.4% <span className="text-slate-400 ml-1 font-normal">vs last month</span>
-                  </span>
-                </div>
-              </div>
-              <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex justify-center items-center">
-                <Users className="w-6 h-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between space-x-4">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Active Branches</p>
-                <div className="flex items-baseline space-x-2 mt-2">
-                  <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">8</h2>
-                </div>
-              </div>
-              <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/20 text-amber-500 rounded-xl flex justify-center items-center">
-                <Building2 className="w-6 h-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between space-x-4">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Subjects</p>
-                <div className="flex items-baseline space-x-2 mt-2">
-                  <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">45</h2>
-                </div>
-              </div>
-              <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 text-purple-500 rounded-xl flex justify-center items-center">
-                <BookOpen className="w-6 h-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          );
+        })}
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="col-span-1 border-t-4 border-t-primary">
-          <CardHeader>
-            <CardTitle>Enrollment Dynamics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={enrollmentData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                  <Tooltip 
-                    cursor={{fill: '#f8fafc'}}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                  />
-                  <Bar dataKey="students" fill="#7c3aed" radius={[4, 4, 0, 0]} barSize={20} />
-                </BarChart>
-              </ResponsiveContainer>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Enrollment Bar */}
+        <div className="card p-6 lg:col-span-2">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Student Enrollment</div>
+              <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Monthly trend this year</div>
             </div>
-          </CardContent>
-        </Card>
+            <select className="form-input" style={{ width: 'auto', padding: '6px 12px', fontSize: 12 }}>
+              <option>2026</option><option>2025</option>
+            </select>
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={DUMMY_ENROLL} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+              <XAxis dataKey="m" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} />
+              <Tooltip cursor={{ fill: 'var(--accent-light)' }} />
+              <Bar dataKey="n" fill="var(--accent)" radius={[4, 4, 0, 0]} maxBarSize={28} name="Students" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Overall Pass Rates by Batch</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={performanceData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                  <XAxis dataKey="batch" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                  />
-                  <Line type="monotone" dataKey="passRate" stroke="#d946ef" strokeWidth={3} dot={{r: 6, fill: '#d946ef', strokeWidth: 0}} activeDot={{r: 8}} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Activity Area */}
+        <div className="card p-6">
+          <div className="mb-6">
+            <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Weekly Activity</div>
+            <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Login sessions this week</div>
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={DUMMY_ACTIVITY} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="actGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#7c3aed" stopOpacity={0.15}/>
+                  <stop offset="95%" stopColor="#7c3aed" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+              <XAxis dataKey="d" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} />
+              <Tooltip />
+              <Area type="monotone" dataKey="v" stroke="var(--accent)" strokeWidth={2.5} fill="url(#actGrad)" name="Sessions" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Recent Assignments */}
+      <div className="card">
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Recent Teaching Assignments</div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Teacher</th><th>Subject</th><th>Batch</th><th>Semester</th>
+              </tr>
+            </thead>
+            <tbody>
+              {assignments?.slice(0, 6).map((a: any) => (
+                <tr key={a._id}>
+                  <td>
+                    <div className="flex items-center gap-2.5">
+                      <div className="avatar avatar-sm text-xs">{a.teacher_id?.user_id?.name?.charAt(0) || 'T'}</div>
+                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                        {a.teacher_id?.user_id?.name || '—'}
+                      </span>
+                    </div>
+                  </td>
+                  <td>{a.subject_id?.subject_name || '—'}</td>
+                  <td>{a.batch_id?.branch_id?.branch_name || '—'}</td>
+                  <td><span className="badge badge-accent">Sem {a.semester}</span></td>
+                </tr>
+              ))}
+              {!assignments?.length && (
+                <tr><td colSpan={4} className="text-center py-8" style={{ color: 'var(--text-muted)' }}>No assignments yet.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

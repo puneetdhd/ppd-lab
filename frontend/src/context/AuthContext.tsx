@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../api/axios';
 
 export type Role = 'admin' | 'teacher' | 'student';
 
@@ -19,45 +18,32 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType>({
-  user: null,
-  token: null,
-  login: () => {},
-  logout: () => {},
-  loading: true,
+  user: null, token: null, login: () => {}, logout: () => {}, loading: true,
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser]   = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dark, setDark]   = useState(false);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-
-    if (storedToken && storedUser) {
-      try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error('Failed to parse user from local storage', e);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-      }
-    }
+    const t = localStorage.getItem('token');
+    const u = localStorage.getItem('user');
+    const d = localStorage.getItem('theme') === 'dark';
+    if (t && u) { try { setToken(t); setUser(JSON.parse(u)); } catch {} }
+    setDark(d);
+    document.documentElement.classList.toggle('dark', d);
     setLoading(false);
   }, []);
 
   const login = (newToken: string, newUser: User) => {
-    setToken(newToken);
-    setUser(newUser);
+    setToken(newToken); setUser(newUser);
     localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(newUser));
   };
-
   const logout = () => {
-    setToken(null);
-    setUser(null);
+    setToken(null); setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   };

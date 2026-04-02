@@ -1,91 +1,142 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { cn } from '../../lib/utils';
-import { 
-  LayoutDashboard, Users, BookOpen, GraduationCap, 
-  Calendar, FileLineChart, LogOut, Settings, ClipboardList
+import {
+  LayoutDashboard, GraduationCap, Users, BookOpen, Calendar,
+  BarChart3, ClipboardList, MessageSquare, LogOut,
+  ChevronRight, School, Award
 } from 'lucide-react';
 
-interface SidebarProps {
-  className?: string;
+interface NavItem {
+  label: string;
+  path: string;
+  icon: React.ElementType;
+  children?: { label: string; path: string }[];
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
+const NAV: Record<string, NavItem[]> = {
+  admin: [
+    { label: 'Home', path: '/admin', icon: LayoutDashboard },
+    {
+      label: 'Students', path: '/admin/students', icon: GraduationCap,
+      children: [
+        { label: 'All Students',   path: '/admin/students' },
+        { label: 'Add Student',    path: '/admin/students/new' },
+      ]
+    },
+    { label: 'Teachers',    path: '/admin/teachers',   icon: Users },
+    { label: 'Library',     path: '/admin/branches',   icon: BookOpen },
+    { label: 'Subjects',    path: '/admin/subjects',   icon: School },
+    { label: 'Batches',     path: '/admin/batches',    icon: Calendar },
+    { label: 'Assignments', path: '/admin/assignments', icon: ClipboardList },
+    { label: 'Analytics',  path: '/admin/analytics',  icon: BarChart3 },
+    { label: 'Feedback',   path: '/admin/feedback',   icon: MessageSquare },
+  ],
+  teacher: [
+    { label: 'Home',           path: '/teacher',           icon: LayoutDashboard },
+    { label: 'Enter Marks',    path: '/teacher/marks',     icon: ClipboardList },
+    { label: 'Analytics',      path: '/teacher/analytics', icon: BarChart3 },
+    { label: 'My Feedback',    path: '/teacher/feedback',  icon: MessageSquare },
+  ],
+  student: [
+    { label: 'Home',       path: '/student',          icon: LayoutDashboard },
+    { label: 'My Results', path: '/student/results',  icon: Award },
+    { label: 'Feedback',   path: '/student/feedback', icon: MessageSquare },
+  ],
+};
+
+export const Sidebar: React.FC = () => {
   const { user, logout } = useAuth();
-  const role = user?.role || 'student';
+  const navigate = useNavigate();
+  const role = user?.role ?? 'student';
+  const links = NAV[role] ?? [];
+  const [expanded, setExpanded] = useState<string | null>(null);
 
-  const navLinks = {
-    admin: [
-      { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-      { name: 'Branches & Batches', path: '/admin/branches', icon: Calendar },
-      { name: 'Subjects', path: '/admin/subjects', icon: BookOpen },
-      { name: 'Teachers', path: '/admin/teachers', icon: Users },
-      { name: 'Students', path: '/admin/students', icon: GraduationCap },
-      { name: 'Assignments', path: '/admin/assignments', icon: ClipboardList },
-    ],
-    teacher: [
-      { name: 'Dashboard', path: '/teacher', icon: LayoutDashboard },
-      { name: 'Enter Marks', path: '/teacher/marks', icon: FileLineChart },
-      { name: 'Analytics', path: '/teacher/analytics', icon: Settings },
-    ],
-    student: [
-      { name: 'Dashboard', path: '/student', icon: LayoutDashboard },
-      { name: 'My Results', path: '/student/results', icon: FileLineChart },
-      { name: 'Feedback', path: '/student/feedback', icon: BookOpen },
-    ]
-  };
-
-  const links = navLinks[role];
+  const handleLogout = () => { logout(); navigate('/login'); };
 
   return (
-    <aside className={cn("flex flex-col w-64 bg-card border-r border-border shadow-sm h-screen sticky top-0", className)}>
-      <div className="p-6 flex items-center space-x-3">
-        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">
-          P
+    <aside
+      className="flex flex-col h-screen sticky top-0 shrink-0"
+      style={{ width: 'var(--sidebar-w)', background: 'var(--bg-sidebar)', borderRight: '1px solid var(--border)' }}
+    >
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-6 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="flex items-center justify-center w-9 h-9 rounded-xl text-white font-bold text-lg shadow-md"
+          style={{ background: 'var(--accent)' }}>
+          ia
         </div>
-        <span className="text-xl font-bold tracking-tight text-foreground">
-          ia Academy
-        </span>
+        <span className="font-bold text-lg tracking-tight" style={{ color: 'var(--text-primary)' }}>ia Academy</span>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1 mt-4">
-        {links.map((link) => {
-          const Icon = link.icon;
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+        {links.map((item) => {
+          const Icon = item.icon;
+          const hasChildren = !!item.children?.length;
+          const isExpanded = expanded === item.label;
+
+          if (hasChildren) {
+            return (
+              <div key={item.label}>
+                <button
+                  onClick={() => setExpanded(isExpanded ? null : item.label)}
+                  className="sidebar-link w-full"
+                >
+                  <Icon className="shrink-0" size={18} />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  <ChevronRight
+                    size={14}
+                    className="transition-transform duration-200"
+                    style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0)' }}
+                  />
+                </button>
+                {isExpanded && (
+                  <div className="ml-8 mt-0.5 space-y-0.5">
+                    {item.children!.map(ch => (
+                      <NavLink
+                        key={ch.path}
+                        to={ch.path}
+                        end
+                        className={({ isActive }) => `sidebar-link text-xs py-2 ${isActive ? 'active' : ''}`}
+                      >
+                        {ch.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           return (
             <NavLink
-              key={link.path}
-              to={link.path}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group",
-                  isActive 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                )
-              }
+              key={item.path}
+              to={item.path}
+              end={item.path.split('/').length <= 2}
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
             >
-              {({ isActive }) => (
-                <>
-                  <Icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300")} />
-                  <span>{link.name}</span>
-                  {isActive && (
-                    <div className="absolute left-0 w-1 h-8 bg-primary rounded-r-md" />
-                  )}
-                </>
-              )}
+              <Icon className="shrink-0" size={18} />
+              <span>{item.label}</span>
             </NavLink>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-border">
-        <button 
-          onClick={logout}
-          className="flex items-center space-x-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-        >
-          <LogOut className="w-5 h-5" />
-          <span>Sign Out</span>
+      {/* User section */}
+      <div className="p-4" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-3 px-2 py-2 rounded-xl mb-2"
+          style={{ background: 'var(--bg)' }}>
+          <div className="avatar avatar-sm font-bold">
+            {user?.name?.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{user?.name}</div>
+            <div className="text-xs capitalize" style={{ color: 'var(--text-muted)' }}>{user?.role}</div>
+          </div>
+        </div>
+        <button onClick={handleLogout} className="sidebar-link w-full text-sm">
+          <LogOut size={16} />
+          Sign Out
         </button>
       </div>
     </aside>
