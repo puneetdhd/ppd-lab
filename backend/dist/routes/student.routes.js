@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const student_controller_1 = require("../controllers/student.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const role_middleware_1 = require("../middleware/role.middleware");
+const router = (0, express_1.Router)();
+router.post('/', auth_middleware_1.verifyToken, (0, role_middleware_1.requireRole)('admin'), student_controller_1.createStudent);
+router.get('/', auth_middleware_1.verifyToken, (0, role_middleware_1.requireRole)('admin'), student_controller_1.getAllStudents);
+router.get('/me', auth_middleware_1.verifyToken, (0, role_middleware_1.requireRole)('student'), student_controller_1.getMyStudentProfile);
+router.get('/batch/:batchId', auth_middleware_1.verifyToken, (0, role_middleware_1.requireRole)('admin', 'teacher'), student_controller_1.getStudentsByBatch);
+router.get('/:id', auth_middleware_1.verifyToken, (0, role_middleware_1.requireRole)('admin'), student_controller_1.getStudentById);
+exports.default = router;
