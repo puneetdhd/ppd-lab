@@ -14,7 +14,6 @@ export const StudentDashboard: React.FC = () => {
 
   const list = marks || [];
   const avg  = list.length ? list.reduce((s, m) => s + (m.total || 0), 0) / list.length : 0;
-  const passing = list.filter(m => m.grade !== 'F').length;
   const failed  = list.filter(m => m.grade === 'F').length;
 
   return (

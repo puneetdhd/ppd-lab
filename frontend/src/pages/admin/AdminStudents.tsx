@@ -91,7 +91,7 @@ export const AdminStudents: React.FC = () => {
                 {paged.length === 0 && (
                   <tr><td colSpan={6} className="text-center py-12" style={{ color: 'var(--text-muted)' }}>No students found.</td></tr>
                 )}
-                {paged.map((s: any, i) => (
+                {paged.map((s: any) => (
                   <tr key={s._id}>
                     <td><input type="checkbox" className="rounded" /></td>
                     <td>

@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { useApi } from '../../hooks/useApi';
 import api from '../../api/axios';
-import { AlertCircle, CheckCircle2, Loader2, Send } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, Send, Star } from 'lucide-react';
 
 export const StudentFeedback: React.FC = () => {
-  const { data: assignmentsData, loading: assignmentsLoading } = useApi<any[]>('/assignments');
+  const { data: assignmentsData, loading: assignmentsLoading } = useApi<any[]>('/assignments/student/my-subjects');
   const [selectedAssignment, setSelectedAssignment] = useState('');
-  const [rating, setRating] = useState('5');
+  const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   
   const [submitting, setSubmitting] = useState(false);
@@ -20,7 +19,6 @@ export const StudentFeedback: React.FC = () => {
       return;
     }
 
-    // Find the assignment from the list
     const assignment = assignmentsData?.find(a => a._id === selectedAssignment);
     if (!assignment) return;
 
@@ -29,14 +27,14 @@ export const StudentFeedback: React.FC = () => {
 
     try {
       await api.post('/feedback', {
-        teacher_id: assignment.teacher_id._id,
-        subject_id: assignment.subject_id._id,
-        rating: Number(rating),
+        teacher_id: assignment.teacher_id._id || assignment.teacher_id,
+        subject_id: assignment.subject_id._id || assignment.subject_id,
+        rating,
         comment
       });
       setMessage({ type: 'success', text: 'Feedback submitted successfully!' });
       setComment('');
-      setRating('5');
+      setRating(5);
       setSelectedAssignment('');
     } catch (err: any) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to submit feedback' });
@@ -46,84 +44,94 @@ export const StudentFeedback: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-10">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Submit Course Feedback</CardTitle>
-          <p className="text-sm text-slate-500">Your feedback helps us improve the teaching quality.</p>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            
-            {message && (
-              <div className={`p-4 rounded-lg flex items-start space-x-3 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}>
-                {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5" /> : <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />}
-                <p className="text-sm font-medium">{message.text}</p>
-              </div>
-            )}
+    <div className="space-y-6">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Submit Feedback</h1>
+          <div className="page-breadcrumb">Home / Student / <span>Feedback</span></div>
+        </div>
+      </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Subject / Teacher</label>
-              <select 
+      <div className="card max-w-2xl">
+        <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div className="font-bold" style={{ color: 'var(--text-primary)' }}>Course Feedback</div>
+          <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Your feedback helps improve teaching quality</div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {message && (
+            <div className={`p-4 rounded-xl flex items-start gap-3 text-sm font-medium ${
+              message.type === 'success' ? '' : ''
+            }`} style={{
+              background: message.type === 'success' ? 'var(--success-light)' : 'var(--danger-light)',
+              color: message.type === 'success' ? 'var(--success)' : 'var(--danger)',
+            }}>
+              {message.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+              {message.text}
+            </div>
+          )}
+
+          <div>
+            <label className="form-label">Subject / Teacher</label>
+            {assignmentsLoading ? (
+              <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}><Loader2 size={14} className="animate-spin" /> Loading subjects…</div>
+            ) : (
+              <select
+                className="form-input"
                 value={selectedAssignment}
-                onChange={(e) => setSelectedAssignment(e.target.value)}
-                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                disabled={assignmentsLoading}
+                onChange={e => setSelectedAssignment(e.target.value)}
               >
-                <option value="">Select a subject...</option>
-                {assignmentsData?.map((a: any) => (
+                <option value="">Select a subject…</option>
+                {(assignmentsData || []).map((a: any) => (
                   <option key={a._id} value={a._id}>
-                    {a.subject_id?.subject_name} — Taught by {a.teacher_id?.user_id?.name}
+                    {a.subject_id?.subject_name || 'Unknown'} — {a.teacher_id?.user_id?.name || 'Unknown'}
                   </option>
                 ))}
               </select>
-            </div>
+            )}
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Rating (1-5)</label>
-              <div className="flex space-x-4">
-                {[1, 2, 3, 4, 5].map((num) => (
-                  <label key={num} className="flex flex-col items-center cursor-pointer group">
-                    <input 
-                      type="radio" 
-                      name="rating" 
-                      value={num} 
-                      checked={rating === String(num)}
-                      onChange={(e) => setRating(e.target.value)}
-                      className="peer sr-only" 
-                    />
-                    <div className="w-12 h-12 rounded-full flex justify-center items-center font-bold text-lg border-2 border-slate-200 bg-white text-slate-500 peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary transition-all group-hover:border-primary/50">
-                      {num}
-                    </div>
-                  </label>
-                ))}
-              </div>
+          <div>
+            <label className="form-label">Rating</label>
+            <div className="flex items-center gap-2 mt-1">
+              {[1, 2, 3, 4, 5].map(n => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setRating(n)}
+                  className="transition-transform hover:scale-110"
+                >
+                  <Star
+                    size={32}
+                    fill={n <= rating ? '#ffc700' : 'transparent'}
+                    stroke={n <= rating ? '#ffc700' : 'var(--text-muted)'}
+                    strokeWidth={1.5}
+                  />
+                </button>
+              ))}
+              <span className="text-sm font-bold ml-2" style={{ color: 'var(--text-primary)' }}>{rating}/5</span>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Detailed Comments</label>
-              <textarea 
-                rows={4}
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="What went well? What could be improved?"
-                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none"
-              ></textarea>
-            </div>
+          <div>
+            <label className="form-label">Comments (Optional)</label>
+            <textarea
+              rows={4}
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              placeholder="What went well? What could be improved?"
+              className="form-input"
+              style={{ resize: 'none' }}
+            />
+          </div>
 
-            <div className="flex justify-end">
-              <button 
-                type="submit" 
-                disabled={submitting}
-                className="bg-primary hover:bg-primary-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
-                Submit Feedback
-              </button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          <div className="flex justify-end">
+            <button type="submit" className="btn btn-primary" disabled={submitting}>
+              {submitting ? <Loader2 size={14} className="animate-spin" /> : <><Send size={16} /> Submit Feedback</>}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

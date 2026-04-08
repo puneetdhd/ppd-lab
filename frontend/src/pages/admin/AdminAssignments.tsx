@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApi } from '../../hooks/useApi';
 import api from '../../api/axios';
-import { Plus, Loader2, Trash2, ClipboardList } from 'lucide-react';
+import { Plus, Loader2, ClipboardList } from 'lucide-react';
 
 export const AdminAssignments: React.FC = () => {
   const { data, loading, refetch } = useApi<any[]>('/assignments');

@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard, GraduationCap, Users, BookOpen, Calendar,
   BarChart3, ClipboardList, MessageSquare, LogOut,
-  ChevronRight, School, Award
+  ChevronRight, School, Award, ShieldCheck
 } from 'lucide-react';
 
 interface NavItem {
@@ -30,7 +30,15 @@ const NAV: Record<string, NavItem[]> = {
     { label: 'Batches',     path: '/admin/batches',    icon: Calendar },
     { label: 'Assignments', path: '/admin/assignments', icon: ClipboardList },
     { label: 'Analytics',  path: '/admin/analytics',  icon: BarChart3 },
+    {
+      label: 'Performance', path: '/admin/performance', icon: BarChart3,
+      children: [
+        { label: 'By Teacher', path: '/admin/performance/teacher' },
+        { label: 'By Branch', path: '/admin/performance/branch' },
+      ]
+    },
     { label: 'Feedback',   path: '/admin/feedback',   icon: MessageSquare },
+    { label: 'Create Admin', path: '/admin/create-admin', icon: ShieldCheck },
   ],
   teacher: [
     { label: 'Home',           path: '/teacher',           icon: LayoutDashboard },

@@ -3,7 +3,7 @@ import { useApi } from '../../hooks/useApi';
 import { Users, GraduationCap, BookOpen, ClipboardList, TrendingUp, TrendingDown } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, AreaChart, Area
+  AreaChart, Area
 } from 'recharts';
 
 const DUMMY_ENROLL = [

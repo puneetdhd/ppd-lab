@@ -5,11 +5,23 @@ import { AppLayout } from './components/layout/AppLayout';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
 
-// Mock empty pages for initial routing outline
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminBranches } from './pages/admin/AdminBranches';
+import { AdminBatches } from './pages/admin/AdminBatches';
+import { AdminSubjects } from './pages/admin/AdminSubjects';
+import { AdminTeachers } from './pages/admin/AdminTeachers';
+import { AdminStudents } from './pages/admin/AdminStudents';
+import { AdminAssignments } from './pages/admin/AdminAssignments';
+import { AdminAnalytics } from './pages/admin/AdminAnalytics';
+import { AdminFeedback } from './pages/admin/AdminFeedback';
+import { AdminCreateAdmin } from './pages/admin/AdminCreateAdmin';
+import { AdminPerformanceTeacher } from './pages/admin/AdminPerformanceTeacher';
+import { AdminPerformanceBranch } from './pages/admin/AdminPerformanceBranch';
+
 import { TeacherMarks } from './pages/teacher/TeacherMarks';
 import { TeacherAnalytics } from './pages/teacher/TeacherAnalytics';
+import { TeacherFeedback } from './pages/teacher/TeacherFeedback';
+
 import { StudentDashboard } from './pages/student/StudentDashboard';
 import { StudentFeedback } from './pages/student/StudentFeedback';
 
@@ -27,22 +39,24 @@ function App() {
           <Route element={<RoleRoute allowedRoles={['admin']} />}>
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/branches" element={<AdminBranches />} />
-            <Route path="/admin/*" element={
-              <div className="flex items-center justify-center h-64 text-slate-500">
-                To be implemented. Please use Branches for now.
-              </div>
-            } />
+            <Route path="/admin/batches" element={<AdminBatches />} />
+            <Route path="/admin/subjects" element={<AdminSubjects />} />
+            <Route path="/admin/teachers" element={<AdminTeachers />} />
+            <Route path="/admin/students" element={<AdminStudents />} />
+            <Route path="/admin/assignments" element={<AdminAssignments />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route path="/admin/performance/teacher" element={<AdminPerformanceTeacher />} />
+            <Route path="/admin/performance/branch" element={<AdminPerformanceBranch />} />
+            <Route path="/admin/feedback" element={<AdminFeedback />} />
+            <Route path="/admin/create-admin" element={<AdminCreateAdmin />} />
           </Route>
 
           {/* Teacher Routes */}
           <Route element={<RoleRoute allowedRoles={['teacher']} />}>
-            <Route path="/teacher" element={
-              <div className="flex items-center justify-center h-64 text-slate-500">
-                Welcome to Teacher Portal. Navigate to Marks or Analytics.
-              </div>
-            } />
+            <Route path="/teacher" element={<TeacherAnalytics />} />
             <Route path="/teacher/marks" element={<TeacherMarks />} />
             <Route path="/teacher/analytics" element={<TeacherAnalytics />} />
+            <Route path="/teacher/feedback" element={<TeacherFeedback />} />
           </Route>
 
           {/* Student Routes */}
