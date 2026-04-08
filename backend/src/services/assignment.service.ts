@@ -1,5 +1,6 @@
 import { assignmentRepository } from '../repositories/assignment.repository';
 import { teacherRepository } from '../repositories/teacher.repository';
+import { studentRepository } from '../repositories/student.repository';
 import { subjectRepository } from '../repositories/subject.repository';
 import { batchRepository } from '../repositories/batch.repository';
 import { AppError } from '../utils/AppError';
@@ -44,6 +45,15 @@ export class AssignmentService {
 
   async getAssignmentsByBatchSemester(batchId: string, semester: number) {
     return assignmentRepository.findByBatchAndSemester(batchId, semester);
+  }
+
+  async getStudentAssignments(userId: string) {
+    const student = await studentRepository.findByUserId(userId);
+    if (!student) throw new AppError('Student profile not found', 404);
+    return assignmentRepository.findByBatchAndSemester(
+      String(student.batch_id),
+      student.semester
+    );
   }
 }
 

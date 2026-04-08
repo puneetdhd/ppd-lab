@@ -3,6 +3,7 @@ import { assignmentRepository } from '../repositories/assignment.repository';
 import { studentRepository } from '../repositories/student.repository';
 import { calculateGrade } from '../utils/grades';
 import { AppError } from '../utils/AppError';
+import { Mark } from '../models/Mark.model';
 
 interface MarkInput {
   student_id: string;
@@ -56,6 +57,13 @@ export class MarkService {
     const grade = calculateGrade(total);
 
     return markRepository.updateById(id, { mid, quiz, assignment, attendance, total, grade });
+  }
+
+  async deleteMark(id: string) {
+    const mark = await markRepository.findById(id);
+    if (!mark) throw new AppError('Mark record not found', 404);
+    await Mark.findByIdAndDelete(id);
+    return { message: 'Mark deleted successfully' };
   }
 
   async getStudentResults(userId: string) {

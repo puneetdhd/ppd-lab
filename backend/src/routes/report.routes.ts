@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import { subjectReport, batchReport, gradeDistribution } from '../controllers/report.controller';
+import { 
+  subjectReport, 
+  batchReport, 
+  gradeDistribution,
+  teacherPerformance,
+  branchPerformance
+} from '../controllers/report.controller';
 import { verifyToken } from '../middleware/auth.middleware';
 import { requireRole } from '../middleware/role.middleware';
 
@@ -18,6 +24,20 @@ router.get(
   verifyToken,
   requireRole('admin', 'teacher'),
   gradeDistribution
+);
+
+// Performance Analytics
+router.get(
+  '/teacher-performance/:teacherId',
+  verifyToken,
+  requireRole('admin'),
+  teacherPerformance
+);
+router.get(
+  '/branch-performance/:branchId',
+  verifyToken,
+  requireRole('admin'),
+  branchPerformance
 );
 
 export default router;

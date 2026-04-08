@@ -29,3 +29,8 @@ export const getMyTeacherProfile = asyncHandler(async (req: Request, res: Respon
   const teacher = await teacherService.getTeacherByUserId(req.user!.user_id);
   res.status(200).json({ success: true, data: teacher });
 });
+
+export const deleteTeacher = asyncHandler(async (req: Request, res: Response) => {
+  const result = await teacherService.deleteTeacher(req.params.id);
+  res.status(200).json({ success: true, ...result });
+});

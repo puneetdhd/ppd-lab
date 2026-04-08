@@ -11,3 +11,8 @@ export const getMyAnalysis = asyncHandler(async (req: Request, res: Response) =>
   const data = await analysisService.getTeacherAnalysis(req.user!.user_id);
   res.status(200).json({ success: true, count: data.length, data });
 });
+
+export const getAllAnalysis = asyncHandler(async (_req: Request, res: Response) => {
+  const data = await analysisService.getAllAnalysis();
+  res.status(200).json({ success: true, count: data.length, data });
+});

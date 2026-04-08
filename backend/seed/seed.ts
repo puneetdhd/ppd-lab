@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -11,7 +12,6 @@ import { Student } from '../src/models/Student.model';
 import { Subject } from '../src/models/Subject.model';
 import { TeachingAssignment } from '../src/models/TeachingAssignment.model';
 import { Mark } from '../src/models/Mark.model';
-import { Feedback } from '../src/models/Feedback.model';
 import { calculateGrade } from '../src/utils/grades';
 
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/marks_result_db';
@@ -20,6 +20,7 @@ const seed = async () => {
   await mongoose.connect(MONGO_URI);
   console.log('✅ Connected to MongoDB');
 
+  // Clear existing
   await Promise.all([
     User.deleteMany({}),
     Branch.deleteMany({}),
@@ -29,156 +30,175 @@ const seed = async () => {
     Subject.deleteMany({}),
     TeachingAssignment.deleteMany({}),
     Mark.deleteMany({}),
-    Feedback.deleteMany({}),
   ]);
   console.log('🗑️  Cleared existing data');
 
-  // ── Admin (User.create triggers bcrypt pre-save hook) ──────────────────────
-  const adminUser = await User.create({ name: 'Super Admin', email: 'admin@ppd.edu', password: 'admin123', role: 'admin' });
-  console.log(`👤 Admin created: ${adminUser.email}`);
+  const hashedAdminPass = await bcrypt.hash('admin123', 12);
+  const hashedTeacherPass = await bcrypt.hash('teacher123', 12);
+  const hashedStudentPass = await bcrypt.hash('student123', 12);
+
+  // ── Admin ──────────────────────────────────────────────────────────────────
+  await User.insertMany([{
+    name: 'Super Admin',
+    email: 'admin@ppd.edu',
+    password: hashedAdminPass,
+    role: 'admin'
+  }]);
+  console.log('👤 Admin created');
 
   // ── Branches ───────────────────────────────────────────────────────────────
-  const branches = await Branch.insertMany([
-    { branch_name: 'Information Technology' },
-    { branch_name: 'Computer Science Engineering' },
-    { branch_name: 'Electronics & Communication' },
-  ]);
-  const [itBranch, cseBranch] = branches;
-  console.log('🏛️  Branches created');
+  const branchNames = ['CSE', 'IT', 'MECH', 'AI', 'ML', 'ECE', 'E&I', 'Civil', 'Biotech', 'CE', 'Electrical'];
+  const branches = await Branch.insertMany(branchNames.map(name => ({ branch_name: name })));
+  console.log(`🏛️  Branches created: 11`);
 
   // ── Batches ────────────────────────────────────────────────────────────────
-  const batches = await Batch.insertMany([
-    { branch_id: itBranch._id, start_year: 2024, graduation_year: 2028 },
-    { branch_id: itBranch._id, start_year: 2023, graduation_year: 2027 },
-    { branch_id: cseBranch._id, start_year: 2024, graduation_year: 2028 },
-  ]);
-  const [itBatch2024, itBatch2023, cseBatch2024] = batches;
-  console.log('📅 Batches created');
+  const gradYears = [2026, 2027, 2028, 2029];
+  const batchDefs = [];
+  for (const b of branches) {
+    for (const gy of gradYears) {
+      batchDefs.push({
+        branch_id: b._id,
+        start_year: gy - 4,
+        graduation_year: gy,
+      });
+    }
+  }
+  const batches = await Batch.insertMany(batchDefs);
+  console.log(`📅 Batches created: 44`);
 
   // ── Subjects ───────────────────────────────────────────────────────────────
   const subjects = await Subject.insertMany([
     { subject_name: 'Object Oriented Programming', credits: 4 },
     { subject_name: 'Database Management Systems', credits: 4 },
-    { subject_name: 'Computer Networks', credits: 3 },
     { subject_name: 'Operating Systems', credits: 4 },
-    { subject_name: 'Engineering Mathematics', credits: 3 },
+    { subject_name: 'Computer Networks', credits: 3 },
+    { subject_name: 'Data Structures', credits: 4 },
   ]);
-  const [oops, dbms, cn] = subjects;
-  console.log('📚 Subjects created');
+  console.log(`📚 Subjects created: 5 shared generic subjects`);
 
-  // ── Teachers (User.create triggers bcrypt pre-save hook) ───────────────────
-  const tU1 = await User.create({ name: 'Dr. Ramesh Kumar',    email: 'ramesh@ppd.edu', password: 'teacher123', role: 'teacher' });
-  const tU2 = await User.create({ name: 'Prof. Sunita Sharma', email: 'sunita@ppd.edu', password: 'teacher123', role: 'teacher' });
-  const tU3 = await User.create({ name: 'Dr. Anil Verma',      email: 'anil@ppd.edu',   password: 'teacher123', role: 'teacher' });
+  // ── Teachers ───────────────────────────────────────────────────────────────
+  const teacherUserDefs = Array.from({ length: 50 }).map((_, i) => ({
+    name: `Teacher ${i + 1}`,
+    email: `teacher${i + 1}@ppd.edu`,
+    password: hashedTeacherPass,
+    role: 'teacher' as const
+  }));
+  const teacherUsers = await User.insertMany(teacherUserDefs);
+  const teacherDefs = teacherUsers.map(u => ({ user_id: u._id }));
+  const teachers = await Teacher.insertMany(teacherDefs);
+  console.log(`👨‍🏫 Teachers created: 50`);
 
-  const teachers = await Teacher.insertMany([
-    { user_id: tU1._id },
-    { user_id: tU2._id },
-    { user_id: tU3._id },
-  ]);
-  const [t1, t2, t3] = teachers;
-  console.log('👨‍🏫 Teachers created');
-
-  // ── Students (User.create triggers bcrypt pre-save hook) ───────────────────
-  const studentDefs = [
-    { name: 'Arjun Singh',    email: 's1@ppd.edu',  batchId: itBatch2024._id,  semester: 1 },
-    { name: 'Priya Mehta',    email: 's2@ppd.edu',  batchId: itBatch2024._id,  semester: 1 },
-    { name: 'Rahul Gupta',    email: 's3@ppd.edu',  batchId: itBatch2024._id,  semester: 1 },
-    { name: 'Sneha Patel',    email: 's4@ppd.edu',  batchId: itBatch2024._id,  semester: 1 },
-    { name: 'Vikram Yadav',   email: 's5@ppd.edu',  batchId: itBatch2024._id,  semester: 1 },
-    { name: 'Ananya Joshi',   email: 's6@ppd.edu',  batchId: itBatch2023._id,  semester: 3 },
-    { name: 'Kunal Verma',    email: 's7@ppd.edu',  batchId: itBatch2023._id,  semester: 3 },
-    { name: 'Divya Rao',      email: 's8@ppd.edu',  batchId: itBatch2023._id,  semester: 3 },
-    { name: 'Harsh Malhotra', email: 's9@ppd.edu',  batchId: cseBatch2024._id, semester: 1 },
-    { name: 'Pooja Kapoor',   email: 's10@ppd.edu', batchId: cseBatch2024._id, semester: 1 },
-  ];
-
-  const students: any[] = [];
-  for (const def of studentDefs) {
-    const u = await User.create({ name: def.name, email: def.email, password: 'student123', role: 'student' });
-    const s = await Student.create({ user_id: u._id, batch_id: def.batchId, semester: def.semester });
-    students.push(s);
-  }
-  console.log('🎓 Students created');
-
-  // ── Teaching Assignments ───────────────────────────────────────────────────
-  const assignments = await TeachingAssignment.insertMany([
-    { teacher_id: t1._id, subject_id: oops._id, batch_id: itBatch2024._id,  semester: 1 },
-    { teacher_id: t2._id, subject_id: dbms._id, batch_id: itBatch2023._id,  semester: 3 },
-    { teacher_id: t3._id, subject_id: cn._id,   batch_id: cseBatch2024._id, semester: 1 },
-  ]);
-  const [ta1, ta2, ta3] = assignments;
-  console.log('📋 Teaching assignments created');
-
-  // ── Marks ──────────────────────────────────────────────────────────────────
-  // mid(max 60) + quiz(max 15) + assignment(max 15) + attendance(max 10) = 100
-  const markSets = [
-    {
-      studs: students.slice(0, 5),
-      ta: ta1,
-      raw: [
-        { mid: 55, quiz: 14, assignment: 13, attendance: 9  }, // 91 → O
-        { mid: 48, quiz: 12, assignment: 12, attendance: 8  }, // 80 → E
-        { mid: 40, quiz: 10, assignment: 10, attendance: 7  }, // 67 → B
-        { mid: 30, quiz: 8,  assignment: 9,  attendance: 6  }, // 53 → C
-        { mid: 20, quiz: 5,  assignment: 6,  attendance: 4  }, // 35 → F
-      ],
-    },
-    {
-      studs: students.slice(5, 8),
-      ta: ta2,
-      raw: [
-        { mid: 58, quiz: 14, assignment: 14, attendance: 10 }, // 96 → O
-        { mid: 45, quiz: 11, assignment: 11, attendance: 8  }, // 75 → A
-        { mid: 25, quiz: 6,  assignment: 7,  attendance: 5  }, // 43 → D
-      ],
-    },
-    {
-      studs: students.slice(8, 10),
-      ta: ta3,
-      raw: [
-        { mid: 52, quiz: 13, assignment: 12, attendance: 9 }, // 86 → E
-        { mid: 36, quiz: 9,  assignment: 8,  attendance: 7 }, // 60 → B
-      ],
-    },
-  ];
-
-  const markDocs: any[] = [];
-  for (const set of markSets) {
-    for (let i = 0; i < set.studs.length; i++) {
-      const m = set.raw[i];
-      const total = m.mid + m.quiz + m.assignment + m.attendance;
-      markDocs.push({
-        student_id:    set.studs[i]._id,
-        assignment_id: set.ta._id,
-        ...m,
-        total,
-        grade: calculateGrade(total),
+  // ── Assignments ────────────────────────────────────────────────────────────
+  // 44 batches, assign each batch to exactly 1 distinct teacher so no teacher exceeds 5 batches.
+  const assignmentDefs = [];
+  for (let i = 0; i < batches.length; i++) {
+    // Teacher `i` will handle all 5 subjects for batch `i`
+    const t = teachers[i];
+    const b = batches[i];
+    
+    // We also need the current semester for mapping, but an assignment usually depends on semester
+    // Given the simplicity, we'll just bind the semester statically to what the batch is in or semester 1
+    // The previous seed manually hardcoded semester, let's use the virtual we built for semester!
+    // But since insertMany doesn't hydrate virtuals easily unless mapped, let's calculate here.
+    const yearDiff = new Date().getFullYear() - b.start_year;
+    let sem = (new Date().getMonth() >= 7) ? yearDiff * 2 + 1 : yearDiff * 2;
+    if (sem < 1) sem = 1;
+    if (sem > 8) sem = 8;
+    
+    for (const sub of subjects) {
+      assignmentDefs.push({
+        teacher_id: t._id,
+        subject_id: sub._id,
+        batch_id: b._id,
+        semester: sem,
       });
     }
   }
-  await Mark.insertMany(markDocs);
-  console.log('📝 Marks created');
+  const assignments = await TeachingAssignment.insertMany(assignmentDefs);
+  console.log(`📋 Teaching assignments created: 220`);
 
-  // ── Feedback ───────────────────────────────────────────────────────────────
-  await Feedback.insertMany([
-    { student_id: students[0]._id, teacher_id: t1._id, subject_id: oops._id, rating: 5, comment: 'Excellent teaching! Very clear explanations.' },
-    { student_id: students[1]._id, teacher_id: t1._id, subject_id: oops._id, rating: 4, comment: 'Good lectures, could use more examples.' },
-    { student_id: students[5]._id, teacher_id: t2._id, subject_id: dbms._id, rating: 5, comment: 'Best DBMS classes I have attended.' },
-  ]);
-  console.log('💬 Feedback created');
+  // ── Students ───────────────────────────────────────────────────────────────
+  const batchMappingForAssignments = new Map();
+  for (const a of assignments) {
+    const bId = String(a.batch_id);
+    if (!batchMappingForAssignments.has(bId)) batchMappingForAssignments.set(bId, []);
+    batchMappingForAssignments.get(bId).push(a);
+  }
 
-  console.log('\n✅ Database seeded successfully!\n');
-  console.log('─────────────────────────────────────────');
-  console.log('🔑 Login Credentials:');
-  console.log('  Admin    → admin@ppd.edu      / admin123');
-  console.log('  Teacher1 → ramesh@ppd.edu     / teacher123');
-  console.log('  Teacher2 → sunita@ppd.edu     / teacher123');
-  console.log('  Teacher3 → anil@ppd.edu       / teacher123');
-  console.log('  Student1 → s1@ppd.edu         / student123');
-  console.log('  Student6 → s6@ppd.edu         / student123');
-  console.log('─────────────────────────────────────────\n');
+  const studentUserDefs: any[] = [];
+  const studentMetadataDefs: { batch_id: any; semester: number }[] = []; // Store batch_id & semester info for the 2nd DB pass
+  let sIdCount = 1;
 
+  for (const b of batches) {
+    const yearDiff = new Date().getFullYear() - b.start_year;
+    let sem = (new Date().getMonth() >= 7) ? yearDiff * 2 + 1 : yearDiff * 2;
+    if (sem < 1) sem = 1;
+    if (sem > 8) sem = 8;
+
+    for (let is = 0; is < 50; is++) {
+      studentUserDefs.push({
+        name: `Student ${sIdCount}`,
+        email: `student${sIdCount}@ppd.edu`,
+        password: hashedStudentPass,
+        role: 'student' as const
+      });
+      studentMetadataDefs.push({
+        batch_id: b._id,
+        semester: sem
+      });
+      sIdCount++;
+    }
+  }
+
+  // Insert Users in Chunks (just in case)
+  console.log(`⏳ Inserting 2200 Students...`);
+  const studentUsers = await User.insertMany(studentUserDefs);
+
+  // Combine real _id with metadata for Student collection
+  const realStudentDefs = studentUsers.map((u, i) => ({
+    user_id: u._id,
+    batch_id: studentMetadataDefs[i].batch_id,
+    semester: studentMetadataDefs[i].semester
+  }));
+
+  const insertedStudents = await Student.insertMany(realStudentDefs);
+  console.log(`🎓 Students created: 2200`);
+
+  // ── Marks ──────────────────────────────────────────────────────────────────
+  console.log(`⏳ Generating Marks randomly (11,000 documents) ...`);
+  const markDocs = [];
+  
+  for (const stud of insertedStudents) {
+    const bId = String(stud.batch_id);
+    const assigned = batchMappingForAssignments.get(bId) || [];
+    
+    for (const a of assigned) {
+      // Random generation
+      const mid = Math.floor(Math.random() * 61); // 0-60
+      const quiz = Math.floor(Math.random() * 16); // 0-15
+      const assignment = Math.floor(Math.random() * 16); // 0-15
+      const attendance = Math.floor(Math.random() * 11); // 0-10
+      
+      const total = mid + quiz + assignment + attendance;
+      const grade = calculateGrade(total);
+
+      markDocs.push({
+        student_id: stud._id,
+        assignment_id: a._id,
+        mid, quiz, assignment, attendance, total, grade
+      });
+    }
+  }
+
+  // Insert in chunks to prevent Mongoose memory overflow on some instances
+  const chunkSize = 2000;
+  for (let i = 0; i < markDocs.length; i += chunkSize) {
+    await Mark.insertMany(markDocs.slice(i, i + chunkSize));
+  }
+  
+  console.log(`📝 Marks created: 11000`);
+  
+  console.log('\n✅ Mass seeding completed successfully!\n');
   await mongoose.disconnect();
   process.exit(0);
 };

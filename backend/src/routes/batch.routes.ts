@@ -12,13 +12,14 @@ import { requireRole } from '../middleware/role.middleware';
 
 const router = Router();
 
-router.use(verifyToken, requireRole('admin'));
-
-router.post('/', createBatch);
+// Public GET — needed for registration dropdowns
 router.get('/', getAllBatches);
 router.get('/branch/:branchId', getBatchesByBranch);
 router.get('/:id', getBatchById);
-router.put('/:id', updateBatch);
-router.delete('/:id', deleteBatch);
+
+// Admin only — mutations
+router.post('/', verifyToken, requireRole('admin'), createBatch);
+router.put('/:id', verifyToken, requireRole('admin'), updateBatch);
+router.delete('/:id', verifyToken, requireRole('admin'), deleteBatch);
 
 export default router;

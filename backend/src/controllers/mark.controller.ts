@@ -31,6 +31,11 @@ export const updateMark = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json({ success: true, data: mark });
 });
 
+export const deleteMark = asyncHandler(async (req: Request, res: Response) => {
+  const result = await markService.deleteMark(req.params.id);
+  res.status(200).json({ success: true, ...result });
+});
+
 export const getStudentResults = asyncHandler(async (req: Request, res: Response) => {
   const results = await markService.getStudentResults(req.user!.user_id);
   res.status(200).json({ success: true, count: results.length, data: results });

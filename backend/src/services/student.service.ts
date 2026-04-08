@@ -2,6 +2,8 @@ import { studentRepository } from '../repositories/student.repository';
 import { userRepository } from '../repositories/user.repository';
 import { batchRepository } from '../repositories/batch.repository';
 import { AppError } from '../utils/AppError';
+import { User } from '../models/User.model';
+import { Student } from '../models/Student.model';
 
 interface CreateStudentDTO {
   name: string;
@@ -53,6 +55,17 @@ export class StudentService {
 
   async getStudentsByBatch(batchId: string) {
     return studentRepository.findByBatch(batchId);
+  }
+
+  async deleteStudent(id: string) {
+    const student = await studentRepository.findById(id);
+    if (!student) throw new AppError('Student not found', 404);
+
+    const userId = (student as any).user_id?._id || student.user_id;
+    await Student.findByIdAndDelete(id);
+    if (userId) await User.findByIdAndDelete(userId);
+
+    return { message: 'Student deleted successfully' };
   }
 }
 

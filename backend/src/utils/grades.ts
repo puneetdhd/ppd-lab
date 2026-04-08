@@ -4,10 +4,10 @@
  */
 export function calculateGrade(total: number): string {
   if (total >= 90) return 'O';
-  if (total >= 80) return 'E';
-  if (total >= 70) return 'A';
-  if (total >= 60) return 'B';
-  if (total >= 50) return 'C';
-  if (total >= 40) return 'D';
+  if (total >= 80) return 'A';
+  if (total >= 70) return 'B';
+  if (total >= 60) return 'C';
+  if (total >= 50) return 'D';
+  if (total >= 40) return 'E';
   return 'F';
 }

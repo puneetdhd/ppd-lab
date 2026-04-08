@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   enterMark,
   updateMark,
+  deleteMark,
   getStudentResults,
   getMarksByAssignment,
 } from '../controllers/mark.controller';
@@ -10,9 +11,10 @@ import { requireRole } from '../middleware/role.middleware';
 
 const router = Router();
 
-// Teacher: enter and update marks
+// Teacher: enter, update, delete marks
 router.post('/', verifyToken, requireRole('teacher'), enterMark);
 router.put('/:id', verifyToken, requireRole('teacher'), updateMark);
+router.delete('/:id', verifyToken, requireRole('teacher'), deleteMark);
 
 // Teacher/Admin: view marks for an assignment
 router.get('/assignment/:assignmentId', verifyToken, requireRole('teacher', 'admin'), getMarksByAssignment);

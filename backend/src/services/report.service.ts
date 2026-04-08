@@ -4,6 +4,11 @@ import { assignmentRepository } from '../repositories/assignment.repository';
 import { AppError } from '../utils/AppError';
 import { generateCSV } from '../utils/csv';
 
+// Extra models for complex aggregations
+import { Mark } from '../models/Mark.model';
+import { TeachingAssignment } from '../models/TeachingAssignment.model';
+import { Batch } from '../models/Batch.model';
+
 export class ReportService {
   async subjectReport(assignmentId: string) {
     const assignment = await assignmentRepository.findById(assignmentId);
@@ -73,6 +78,58 @@ export class ReportService {
       total_students: marks.length,
       distribution: dist,
     };
+  }
+
+  async teacherPerformance(teacherId: string) {
+    const assignments = await TeachingAssignment.find({ teacher_id: teacherId }).populate('batch_id');
+    const batchStats: Record<string, { totalMarksCount: number, beyondA: number, belowF: number }> = {};
+    
+    for (const a of assignments) {
+      // @ts-ignore
+      const graduationYear = a.batch_id?.graduation_year || 'Unknown';
+      const label = `Batch ${graduationYear}`;
+      
+      if (!batchStats[label]) {
+        batchStats[label] = { totalMarksCount: 0, beyondA: 0, belowF: 0 };
+      }
+      
+      const marks = await Mark.find({ assignment_id: a._id });
+      batchStats[label].totalMarksCount += marks.length;
+      batchStats[label].beyondA += marks.filter(m => m.grade === 'O' || m.grade === 'A').length;
+      batchStats[label].belowF += marks.filter(m => m.grade === 'F').length;
+    }
+
+    // Convert to array for Recharts
+    return Object.keys(batchStats).sort().map(batch => ({
+      batch,
+      ...batchStats[batch]
+    }));
+  }
+
+  async branchPerformance(branchId: string) {
+    const batches = await Batch.find({ branch_id: branchId });
+    const batchStats: Record<string, { totalMarksCount: number, beyondA: number, belowF: number }> = {};
+
+    for (const b of batches) {
+      const label = `Batch ${b.graduation_year}`;
+      if (!batchStats[label]) {
+        batchStats[label] = { totalMarksCount: 0, beyondA: 0, belowF: 0 };
+      }
+      
+      const assignments = await TeachingAssignment.find({ batch_id: b._id });
+      for (const a of assignments) {
+        const marks = await Mark.find({ assignment_id: a._id });
+        batchStats[label].totalMarksCount += marks.length;
+        batchStats[label].beyondA += marks.filter(m => m.grade === 'O' || m.grade === 'A').length;
+        batchStats[label].belowF += marks.filter(m => m.grade === 'F').length;
+      }
+    }
+
+    // Convert to array for Recharts
+    return Object.keys(batchStats).sort().map(batch => ({
+      batch,
+      ...batchStats[batch]
+    }));
   }
 }
 

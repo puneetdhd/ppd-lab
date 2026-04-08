@@ -41,3 +41,8 @@ export const getAssignmentsByBatchSemester = asyncHandler(
     res.status(200).json({ success: true, count: assignments.length, data: assignments });
   }
 );
+
+export const getStudentAssignments = asyncHandler(async (req: Request, res: Response) => {
+  const assignments = await assignmentService.getStudentAssignments(req.user!.user_id);
+  res.status(200).json({ success: true, count: assignments.length, data: assignments });
+});

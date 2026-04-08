@@ -30,3 +30,13 @@ export const gradeDistribution = asyncHandler(async (req: Request, res: Response
   const data = await reportService.gradeDistribution(req.params.assignmentId);
   res.status(200).json({ success: true, data });
 });
+
+export const teacherPerformance = asyncHandler(async (req: Request, res: Response) => {
+  const data = await reportService.teacherPerformance(req.params.teacherId);
+  res.status(200).json({ success: true, count: data.length, data });
+});
+
+export const branchPerformance = asyncHandler(async (req: Request, res: Response) => {
+  const data = await reportService.branchPerformance(req.params.branchId);
+  res.status(200).json({ success: true, count: data.length, data });
+});

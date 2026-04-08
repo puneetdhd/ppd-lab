@@ -11,13 +11,13 @@ import { requireRole } from '../middleware/role.middleware';
 
 const router = Router();
 
-// All branch routes — Admin only
-router.use(verifyToken, requireRole('admin'));
-
-router.post('/', createBranch);
+// Public GET — needed for registration dropdowns
 router.get('/', getAllBranches);
 router.get('/:id', getBranchById);
-router.put('/:id', updateBranch);
-router.delete('/:id', deleteBranch);
+
+// Admin only — mutations
+router.post('/', verifyToken, requireRole('admin'), createBranch);
+router.put('/:id', verifyToken, requireRole('admin'), updateBranch);
+router.delete('/:id', verifyToken, requireRole('admin'), deleteBranch);
 
 export default router;

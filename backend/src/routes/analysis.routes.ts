@@ -1,9 +1,12 @@
 import { Router } from 'express';
-import { getAnalysisByAssignment, getMyAnalysis } from '../controllers/analysis.controller';
+import { getAnalysisByAssignment, getMyAnalysis, getAllAnalysis } from '../controllers/analysis.controller';
 import { verifyToken } from '../middleware/auth.middleware';
 import { requireRole } from '../middleware/role.middleware';
 
 const router = Router();
+
+// Admin: view all analytics
+router.get('/all', verifyToken, requireRole('admin'), getAllAnalysis);
 
 // Teacher: view their own analysis across all assignments
 router.get('/my', verifyToken, requireRole('teacher'), getMyAnalysis);

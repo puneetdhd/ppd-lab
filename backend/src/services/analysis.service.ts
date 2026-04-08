@@ -34,6 +34,7 @@ export class AnalysisService {
     return {
       assignment_id: assignmentId,
       subject: a.subject_id?.subject_name ?? '',
+      teacher: a.teacher_id?.user_id?.name ?? '',
       batch: batchLabel,
       semester: assignment.semester,
       total_students: marks.length,
@@ -54,6 +55,14 @@ export class AnalysisService {
       assignments.map((a) => this.getAnalysisByAssignment(String(a._id)))
     );
     return results;
+  }
+
+  async getAllAnalysis() {
+    const assignments = await assignmentRepository.findAll();
+    const results = await Promise.all(
+      assignments.map((a) => this.getAnalysisByAssignment(String(a._id)))
+    );
+    return results.filter((r) => r.total_students > 0);
   }
 }
 

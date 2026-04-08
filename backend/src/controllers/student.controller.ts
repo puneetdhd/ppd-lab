@@ -36,3 +36,8 @@ export const getMyStudentProfile = asyncHandler(async (req: Request, res: Respon
   const student = await studentService.getStudentByUserId(req.user!.user_id);
   res.status(200).json({ success: true, data: student });
 });
+
+export const deleteStudent = asyncHandler(async (req: Request, res: Response) => {
+  const result = await studentService.deleteStudent(req.params.id);
+  res.status(200).json({ success: true, ...result });
+});
