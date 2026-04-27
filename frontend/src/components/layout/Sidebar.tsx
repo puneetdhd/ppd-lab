@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
-  LayoutDashboard, GraduationCap, Users, BookOpen, Calendar,
-  BarChart3, ClipboardList, MessageSquare, LogOut,
+  LayoutDashboard, GraduationCap, Users,
+  BarChart3, LogOut,
   ChevronRight, School, Award, ShieldCheck
 } from 'lucide-react';
 
@@ -16,28 +16,19 @@ interface NavItem {
 
 const NAV: Record<string, NavItem[]> = {
   admin: [
-    { label: 'Home', path: '/admin', icon: LayoutDashboard },
-    {
-      label: 'Students', path: '/admin/students', icon: GraduationCap,
-      children: [
-        { label: 'All Students',   path: '/admin/students' },
-        { label: 'Add Student',    path: '/admin/students/new' },
-      ]
-    },
-    { label: 'Teachers',    path: '/admin/teachers',   icon: Users },
-    { label: 'Library',     path: '/admin/branches',   icon: BookOpen },
-    { label: 'Subjects',    path: '/admin/subjects',   icon: School },
-    { label: 'Batches',     path: '/admin/batches',    icon: Calendar },
-    { label: 'Assignments', path: '/admin/assignments', icon: ClipboardList },
-    { label: 'Analytics',  path: '/admin/analytics',  icon: BarChart3 },
+    { label: 'Home',       path: '/admin',             icon: LayoutDashboard },
+    { label: 'Students',   path: '/admin/students',    icon: GraduationCap },
+    { label: 'Teachers',   path: '/admin/teachers',    icon: Users },
+    { label: 'Subjects',   path: '/admin/subjects',    icon: School },
+    { label: 'Analytics',  path: '/admin/analytics',   icon: BarChart3 },
     {
       label: 'Performance', path: '/admin/performance', icon: BarChart3,
       children: [
         { label: 'By Teacher', path: '/admin/performance/teacher' },
-        { label: 'By Branch', path: '/admin/performance/branch' },
+        { label: 'By Branch',  path: '/admin/performance/branch' },
+        { label: 'By Batch',   path: '/admin/performance/batch' },
       ]
     },
-    { label: 'Feedback',   path: '/admin/feedback',   icon: MessageSquare },
     { label: 'Create Admin', path: '/admin/create-admin', icon: ShieldCheck },
   ],
   teacher: [

@@ -6,16 +6,18 @@ import { Teacher } from '../models/Teacher.model';
 
 interface CreateTeacherDTO {
   name: string;
-  email: string;
-  password: string;
+  regdNo: string;
 }
 
 export class TeacherService {
   async createTeacher(data: CreateTeacherDTO) {
-    const existing = await userRepository.findByEmail(data.email);
+    const email = `${data.regdNo}@edu.ppd`;
+    const password = data.regdNo;
+
+    const existing = await userRepository.findByEmail(email);
     if (existing) throw new AppError('Email already in use', 409);
 
-    const user = await userRepository.create({ ...data, role: 'teacher' });
+    const user = await userRepository.create({ name: data.name, email, password, role: 'teacher' });
     const teacher = await teacherRepository.create({ user_id: String(user._id) });
 
     return teacherRepository.findById(String(teacher._id));

@@ -82,7 +82,8 @@ export class ReportService {
 
   async teacherPerformance(teacherId: string) {
     const assignments = await TeachingAssignment.find({ teacher_id: teacherId }).populate('batch_id');
-    const batchStats: Record<string, { totalMarksCount: number, beyondA: number, belowF: number }> = {};
+    const gradeKeys = ['O', 'A', 'B', 'C', 'D', 'E', 'F'] as const;
+    const batchStats: Record<string, { totalMarksCount: number, gradeO: number, gradeA: number, gradeB: number, gradeC: number, gradeD: number, gradeE: number, gradeF: number }> = {};
     
     for (const a of assignments) {
       // @ts-ignore
@@ -90,13 +91,15 @@ export class ReportService {
       const label = `Batch ${graduationYear}`;
       
       if (!batchStats[label]) {
-        batchStats[label] = { totalMarksCount: 0, beyondA: 0, belowF: 0 };
+        batchStats[label] = { totalMarksCount: 0, gradeO: 0, gradeA: 0, gradeB: 0, gradeC: 0, gradeD: 0, gradeE: 0, gradeF: 0 };
       }
       
       const marks = await Mark.find({ assignment_id: a._id });
       batchStats[label].totalMarksCount += marks.length;
-      batchStats[label].beyondA += marks.filter(m => m.grade === 'O' || m.grade === 'A').length;
-      batchStats[label].belowF += marks.filter(m => m.grade === 'F').length;
+      for (const g of gradeKeys) {
+        const count = marks.filter(m => m.grade === g).length;
+        (batchStats[label] as any)[`grade${g}`] += count;
+      }
     }
 
     // Convert to array for Recharts
@@ -108,20 +111,23 @@ export class ReportService {
 
   async branchPerformance(branchId: string) {
     const batches = await Batch.find({ branch_id: branchId });
-    const batchStats: Record<string, { totalMarksCount: number, beyondA: number, belowF: number }> = {};
+    const gradeKeys = ['O', 'A', 'B', 'C', 'D', 'E', 'F'] as const;
+    const batchStats: Record<string, { totalMarksCount: number, gradeO: number, gradeA: number, gradeB: number, gradeC: number, gradeD: number, gradeE: number, gradeF: number }> = {};
 
     for (const b of batches) {
       const label = `Batch ${b.graduation_year}`;
       if (!batchStats[label]) {
-        batchStats[label] = { totalMarksCount: 0, beyondA: 0, belowF: 0 };
+        batchStats[label] = { totalMarksCount: 0, gradeO: 0, gradeA: 0, gradeB: 0, gradeC: 0, gradeD: 0, gradeE: 0, gradeF: 0 };
       }
       
       const assignments = await TeachingAssignment.find({ batch_id: b._id });
       for (const a of assignments) {
         const marks = await Mark.find({ assignment_id: a._id });
         batchStats[label].totalMarksCount += marks.length;
-        batchStats[label].beyondA += marks.filter(m => m.grade === 'O' || m.grade === 'A').length;
-        batchStats[label].belowF += marks.filter(m => m.grade === 'F').length;
+        for (const g of gradeKeys) {
+          const count = marks.filter(m => m.grade === g).length;
+          (batchStats[label] as any)[`grade${g}`] += count;
+        }
       }
     }
 
@@ -129,6 +135,37 @@ export class ReportService {
     return Object.keys(batchStats).sort().map(batch => ({
       batch,
       ...batchStats[batch]
+    }));
+  }
+
+  async batchTeachersPerformance(batchId: string) {
+    const assignments = await TeachingAssignment.find({ batch_id: batchId })
+      .populate({ path: 'teacher_id', populate: { path: 'user_id', select: 'name' } })
+      .populate('subject_id');
+    
+    const gradeKeys = ['O', 'A', 'B', 'C', 'D', 'E', 'F'] as const;
+    type GradeStats = { totalMarksCount: number, gradeO: number, gradeA: number, gradeB: number, gradeC: number, gradeD: number, gradeE: number, gradeF: number };
+    const teacherStats: Record<string, GradeStats> = {};
+
+    for (const a of assignments) {
+      // @ts-ignore
+      const teacherName = a.teacher_id?.user_id?.name || 'Unknown';
+      
+      if (!teacherStats[teacherName]) {
+        teacherStats[teacherName] = { totalMarksCount: 0, gradeO: 0, gradeA: 0, gradeB: 0, gradeC: 0, gradeD: 0, gradeE: 0, gradeF: 0 };
+      }
+
+      const marks = await Mark.find({ assignment_id: a._id });
+      teacherStats[teacherName].totalMarksCount += marks.length;
+      for (const g of gradeKeys) {
+        const count = marks.filter(m => m.grade === g).length;
+        (teacherStats[teacherName] as any)[`grade${g}`] += count;
+      }
+    }
+
+    return Object.keys(teacherStats).sort().map(teacher => ({
+      teacher,
+      ...teacherStats[teacher]
     }));
   }
 }

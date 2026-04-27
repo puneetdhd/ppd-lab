@@ -40,3 +40,8 @@ export const branchPerformance = asyncHandler(async (req: Request, res: Response
   const data = await reportService.branchPerformance(req.params.branchId);
   res.status(200).json({ success: true, count: data.length, data });
 });
+
+export const batchTeachersPerformance = asyncHandler(async (req: Request, res: Response) => {
+  const data = await reportService.batchTeachersPerformance(req.params.batchId);
+  res.status(200).json({ success: true, count: data.length, data });
+});

@@ -7,7 +7,7 @@ export const AdminTeachers: React.FC = () => {
   const { data, loading, refetch } = useApi<any[]>('/teachers');
   const [search, setSearch] = useState('');
   const [showModal, setModal] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', password: 'teacher123' });
+  const [form, setForm] = useState({ name: '', regdNo: '' });
   const [saving, setSaving] = useState(false);
 
   const teachers = (data || []).filter(t =>
@@ -20,7 +20,7 @@ export const AdminTeachers: React.FC = () => {
     try {
       await api.post('/teachers', form);
       setModal(false);
-      setForm({ name: '', email: '', password: 'teacher123' });
+      setForm({ name: '', regdNo: '' });
       refetch();
     } catch (err: any) { alert(err.response?.data?.message || 'Failed'); }
     finally { setSaving(false); }
@@ -105,11 +105,19 @@ export const AdminTeachers: React.FC = () => {
             <form onSubmit={handleCreate}>
               <div className="modal-body space-y-4">
                 <div><label className="form-label">Full Name</label>
-                  <input className="form-input" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Dr. John Smith" /></div>
-                <div><label className="form-label">Email</label>
-                  <input type="email" className="form-input" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="teacher@ppd.edu" /></div>
-                <div><label className="form-label">Password</label>
-                  <input className="form-input" required value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></div>
+                  <input className="form-input" required value={form.name}
+                    onChange={e => setForm({ ...form, name: e.target.value })}
+                    placeholder="Dr. John Smith" /></div>
+                <div><label className="form-label">Teacher ID / Regd No</label>
+                  <input className="form-input" required value={form.regdNo}
+                    onChange={e => setForm({ ...form, regdNo: e.target.value })}
+                    placeholder="TCH2024001" /></div>
+                {form.regdNo && (
+                  <div className="text-xs p-3 rounded-xl" style={{ background: 'var(--bg)', color: 'var(--text-muted)' }}>
+                    <strong style={{ color: 'var(--text-primary)' }}>Auto-generated credentials:</strong><br />
+                    Email: <code>{form.regdNo}@edu.ppd</code> &nbsp;·&nbsp; Password: <code>{form.regdNo}</code>
+                  </div>
+                )}
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline" onClick={() => setModal(false)}>Cancel</button>

@@ -48,7 +48,7 @@ export const AdminPerformanceBranch: React.FC = () => {
       {selectedBranchId && (
         <div className="card p-6 min-h-[400px]">
           <div className="font-semibold mb-6 flex justify-between items-center" style={{ color: 'var(--text-primary)' }}>
-            <span>Branch Outcome Comparison (O/A vs F) Across Batches</span>
+            <span>Grade Distribution Across Batches</span>
           </div>
           
           {loadingChart ? (
@@ -78,12 +78,17 @@ export const AdminPerformanceBranch: React.FC = () => {
                 />
                 <Tooltip 
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  cursor={{ fill: 'var(--bg-hover)' }}
+                  cursor={false}
                 />
                 <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
                 
-                <Bar dataKey="beyondA" name="Scored O or A" fill="#50cd89" radius={[4, 4, 0, 0]} maxBarSize={60} />
-                <Bar dataKey="belowF" name="Failed (F)" fill="#f1416c" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                <Bar dataKey="gradeO" name="O (90-100)" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={36} />
+                <Bar dataKey="gradeA" name="A (80-89)"  fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={36} />
+                <Bar dataKey="gradeB" name="B (70-79)"  fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={36} />
+                <Bar dataKey="gradeC" name="C (60-69)"  fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={36} />
+                <Bar dataKey="gradeD" name="D (50-59)"  fill="#f97316" radius={[4, 4, 0, 0]} maxBarSize={36} />
+                <Bar dataKey="gradeE" name="E (40-49)"  fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={36} />
+                <Bar dataKey="gradeF" name="F (<40)"    fill="#6b7280" radius={[4, 4, 0, 0]} maxBarSize={36} />
               </BarChart>
             </ResponsiveContainer>
           )}

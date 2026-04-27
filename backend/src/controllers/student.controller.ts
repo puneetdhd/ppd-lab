@@ -41,3 +41,24 @@ export const deleteStudent = asyncHandler(async (req: Request, res: Response) =>
   const result = await studentService.deleteStudent(req.params.id);
   res.status(200).json({ success: true, ...result });
 });
+
+const bulkCreateSchema = z.object({
+  batch_id: z.string().min(1),
+  rows: z.array(z.object({
+    name: z.string(),
+    regdNo: z.string(),
+  })).min(1, 'At least one row is required'),
+});
+
+export const bulkCreateStudents = asyncHandler(async (req: Request, res: Response) => {
+  const { batch_id, rows } = bulkCreateSchema.parse(req.body);
+  const results = await studentService.bulkCreateStudents(rows, batch_id);
+  const created = results.filter(r => r.status === 'Created').length;
+  res.status(201).json({
+    success: true,
+    total: rows.length,
+    created,
+    skipped: rows.length - created,
+    data: results,
+  });
+});

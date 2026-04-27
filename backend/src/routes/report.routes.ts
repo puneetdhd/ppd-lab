@@ -4,7 +4,8 @@ import {
   batchReport, 
   gradeDistribution,
   teacherPerformance,
-  branchPerformance
+  branchPerformance,
+  batchTeachersPerformance
 } from '../controllers/report.controller';
 import { verifyToken } from '../middleware/auth.middleware';
 import { requireRole } from '../middleware/role.middleware';
@@ -38,6 +39,12 @@ router.get(
   verifyToken,
   requireRole('admin'),
   branchPerformance
+);
+router.get(
+  '/batch-teachers-performance/:batchId',
+  verifyToken,
+  requireRole('admin'),
+  batchTeachersPerformance
 );
 
 export default router;
