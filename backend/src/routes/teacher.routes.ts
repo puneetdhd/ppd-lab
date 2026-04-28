@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   createTeacher,
+  bulkCreateTeachers,
   getAllTeachers,
   getTeacherById,
   getMyTeacherProfile,
@@ -13,6 +14,7 @@ const router = Router();
 
 // Admin: CRUD
 router.post('/', verifyToken, requireRole('admin'), createTeacher);
+router.post('/bulk', verifyToken, requireRole('admin'), bulkCreateTeachers);
 router.get('/', verifyToken, requireRole('admin'), getAllTeachers);
 router.get('/me', verifyToken, requireRole('teacher'), getMyTeacherProfile);
 router.get('/:id', verifyToken, requireRole('admin'), getTeacherById);

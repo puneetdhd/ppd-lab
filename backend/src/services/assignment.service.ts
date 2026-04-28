@@ -47,6 +47,13 @@ export class AssignmentService {
     return assignmentRepository.findByBatchAndSemester(batchId, semester);
   }
 
+  async deleteAssignment(id: string) {
+    const assignment = await assignmentRepository.findById(id);
+    if (!assignment) throw new AppError('Assignment not found', 404);
+    await (await import('../models/TeachingAssignment.model')).TeachingAssignment.findByIdAndDelete(id);
+    return { message: 'Assignment deleted successfully' };
+  }
+
   async getStudentAssignments(userId: string) {
     const student = await studentRepository.findByUserId(userId);
     if (!student) throw new AppError('Student profile not found', 404);

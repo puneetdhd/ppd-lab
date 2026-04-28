@@ -6,6 +6,7 @@ import {
   getMyAssignments,
   getAssignmentsByBatchSemester,
   getStudentAssignments,
+  deleteAssignment,
 } from '../controllers/assignment.controller';
 import { verifyToken } from '../middleware/auth.middleware';
 import { requireRole } from '../middleware/role.middleware';
@@ -25,5 +26,6 @@ router.get('/batch/:batchId/semester/:semester', verifyToken, getAssignmentsByBa
 router.post('/', verifyToken, requireRole('admin'), assignTeacher);
 router.get('/', verifyToken, requireRole('admin'), getAllAssignments);
 router.get('/:id', verifyToken, requireRole('admin', 'teacher'), getAssignmentById);
+router.delete('/:id', verifyToken, requireRole('admin'), deleteAssignment);
 
 export default router;

@@ -17,9 +17,20 @@ export const createStudent = asyncHandler(async (req: Request, res: Response) =>
   res.status(201).json({ success: true, data: student });
 });
 
-export const getAllStudents = asyncHandler(async (_req: Request, res: Response) => {
-  const students = await studentService.getAllStudents();
-  res.status(200).json({ success: true, count: students.length, data: students });
+export const getAllStudents = asyncHandler(async (req: Request, res: Response) => {
+  const page   = Math.max(1, parseInt(req.query.page  as string) || 1);
+  const limit  = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+  const search = (req.query.search as string)?.trim() || undefined;
+
+  const { data, total } = await studentService.getStudentsPaginated(page, limit, search);
+
+  res.status(200).json({
+    success: true,
+    data,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  });
 });
 
 export const getStudentById = asyncHandler(async (req: Request, res: Response) => {

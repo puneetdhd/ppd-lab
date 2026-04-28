@@ -46,3 +46,8 @@ export const getStudentAssignments = asyncHandler(async (req: Request, res: Resp
   const assignments = await assignmentService.getStudentAssignments(req.user!.user_id);
   res.status(200).json({ success: true, count: assignments.length, data: assignments });
 });
+
+export const deleteAssignment = asyncHandler(async (req: Request, res: Response) => {
+  const result = await assignmentService.deleteAssignment(req.params.id);
+  res.status(200).json({ success: true, ...result });
+});

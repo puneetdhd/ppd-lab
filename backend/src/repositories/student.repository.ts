@@ -18,6 +18,37 @@ export class StudentRepository {
     return Student.find().populate(populateStudent).sort({ createdAt: -1 });
   }
 
+  async findPaginated(opts: {
+    page: number;
+    limit: number;
+    search?: string;
+  }): Promise<{ data: IStudent[]; total: number }> {
+    const { page, limit, search } = opts;
+    const filter: any = {};
+
+    if (search) {
+      // search by name or email via join on user_id
+      const users = await (await import('../models/User.model')).User.find({
+        $or: [
+          { name:  { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+        ],
+      }, '_id').lean();
+      filter.user_id = { $in: users.map((u: any) => u._id) };
+    }
+
+    const [data, total] = await Promise.all([
+      Student.find(filter)
+        .populate(populateStudent)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit),
+      Student.countDocuments(filter),
+    ]);
+
+    return { data, total };
+  }
+
   async findById(id: string): Promise<IStudent | null> {
     return Student.findById(id).populate(populateStudent);
   }

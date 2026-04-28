@@ -11,8 +11,8 @@ interface CreateTeacherDTO {
 
 export class TeacherService {
   async createTeacher(data: CreateTeacherDTO) {
-    const email = `${data.regdNo}@edu.ppd`;
-    const password = data.regdNo;
+    const email    = `${data.regdNo}@edu.ppd`.toLowerCase();
+    const password = data.regdNo.toLowerCase(); // lowercase to match email prefix
 
     const existing = await userRepository.findByEmail(email);
     if (existing) throw new AppError('Email already in use', 409);
@@ -25,6 +25,10 @@ export class TeacherService {
 
   async getAllTeachers() {
     return teacherRepository.findAll();
+  }
+
+  async getTeachersPaginated(page: number, limit: number, search?: string) {
+    return teacherRepository.findPaginated({ page, limit, search });
   }
 
   async getTeacherById(id: string) {
@@ -48,6 +52,38 @@ export class TeacherService {
     if (userId) await User.findByIdAndDelete(userId);
 
     return { message: 'Teacher deleted successfully' };
+  }
+
+  async bulkCreateTeachers(rows: { name: string; regdNo: string }[]) {
+    const results: { name: string; email: string; status: string }[] = [];
+
+    for (const row of rows) {
+      const name = row.name.trim();
+      const regdNo = row.regdNo.trim();
+      if (!name || !regdNo) {
+        results.push({ name: name || '(empty)', email: '', status: 'Skipped — missing name or ID' });
+        continue;
+      }
+
+      const email    = `${regdNo}@edu.ppd`.toLowerCase();
+      const password = regdNo.toLowerCase(); // lowercase to match email prefix
+
+      try {
+        const existing = await userRepository.findByEmail(email);
+        if (existing) {
+          results.push({ name, email, status: 'Skipped — email already exists' });
+          continue;
+        }
+
+        const user = await userRepository.create({ name, email, password, role: 'teacher' });
+        await teacherRepository.create({ user_id: String(user._id) });
+        results.push({ name, email, status: 'Created' });
+      } catch (err: any) {
+        results.push({ name, email, status: `Failed — ${err.message}` });
+      }
+    }
+
+    return results;
   }
 }
 

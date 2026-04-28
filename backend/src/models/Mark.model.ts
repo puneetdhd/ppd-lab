@@ -3,11 +3,11 @@ import mongoose, { Document, Schema, Types } from 'mongoose';
 export interface IMark extends Document {
   student_id: Types.ObjectId;
   assignment_id: Types.ObjectId;
-  mid: number;        // max 60
-  quiz: number;       // max 15
-  assignment: number; // max 15
-  attendance: number; // max 10
-  total: number;      // computed: mid + quiz + assignment + attendance (max 100)
+  midsem: number;     // max 20
+  endsem: number;     // max 60
+  quiz: number;       // max 10
+  assignment: number; // max 10
+  total: number;      // total out of 100: midsem(20)+endsem(60)+quiz(10)+assignment(10)
   grade: string;      // computed via grade rules
   createdAt: Date;
   updatedAt: Date;
@@ -15,14 +15,14 @@ export interface IMark extends Document {
 
 const MarkSchema = new Schema<IMark>(
   {
-    student_id: { type: Schema.Types.ObjectId, ref: 'Student', required: true },
-    assignment_id: { type: Schema.Types.ObjectId, ref: 'TeachingAssignment', required: true },
-    mid: { type: Number, required: true, min: 0, max: 60 },
-    quiz: { type: Number, required: true, min: 0, max: 15 },
-    assignment: { type: Number, required: true, min: 0, max: 15 },
-    attendance: { type: Number, required: true, min: 0, max: 10 },
-    total: { type: Number },
-    grade: { type: String },
+    student_id:   { type: Schema.Types.ObjectId, ref: 'Student',            required: true },
+    assignment_id:{ type: Schema.Types.ObjectId, ref: 'TeachingAssignment',  required: true },
+    midsem:       { type: Number, required: true, min: 0, max: 20 },
+    endsem:       { type: Number, required: true, min: 0, max: 60 },
+    quiz:         { type: Number, required: true, min: 0, max: 20 },
+    assignment:   { type: Number, required: true, min: 0, max: 10 },
+    total:        { type: Number },
+    grade:        { type: String },
   },
   { timestamps: true }
 );

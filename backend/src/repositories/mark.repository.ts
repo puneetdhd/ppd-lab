@@ -3,19 +3,19 @@ import { Mark, IMark } from '../models/Mark.model';
 interface CreateMarkData {
   student_id: string;
   assignment_id: string;
-  mid: number;
+  midsem: number;
+  endsem: number;
   quiz: number;
   assignment: number;
-  attendance: number;
   total: number;
   grade: string;
 }
 
 interface UpdateMarkData {
-  mid?: number;
+  midsem?: number;
+  endsem?: number;
   quiz?: number;
   assignment?: number;
-  attendance?: number;
   total?: number;
   grade?: string;
 }

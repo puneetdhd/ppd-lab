@@ -41,6 +41,10 @@ export class StudentService {
     return studentRepository.findAll();
   }
 
+  async getStudentsPaginated(page: number, limit: number, search?: string) {
+    return studentRepository.findPaginated({ page, limit, search });
+  }
+
   async getStudentById(id: string) {
     const student = await studentRepository.findById(id);
     if (!student) throw new AppError('Student not found', 404);
