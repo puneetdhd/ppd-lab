@@ -20,7 +20,7 @@ export const TeacherMarks: React.FC = () => {
   const [page, setPage]     = useState(1);
   const [showModal, setModal] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
-  const [form, setForm] = useState({ student_id: '', mid: 0, quiz: 0, assignment: 0, attendance: 0 });
+  const [form, setForm] = useState({ student_id: '', midsem: 0, endsem: 0, quiz: 0, assignment: 0 });
   const [saving, setSaving] = useState(false);
 
   const fetchMarks = async (assignmentId: string) => {
@@ -54,7 +54,7 @@ export const TeacherMarks: React.FC = () => {
     try {
       await api.post('/marks', { ...form, assignment_id: selectedAssignment });
       setModal(false);
-      setForm({ student_id: '', mid: 0, quiz: 0, assignment: 0, attendance: 0 });
+      setForm({ student_id: '', midsem: 0, endsem: 0, quiz: 0, assignment: 0 });
       fetchMarks(selectedAssignment);
     } catch (err: any) { alert(err.response?.data?.message || 'Failed to save mark'); }
     finally { setSaving(false); }
@@ -131,7 +131,7 @@ export const TeacherMarks: React.FC = () => {
                   <tr>
                     <th><input type="checkbox" className="rounded" /></th>
                     <th>Students Name</th>
-                    <th>Mid (60)</th><th>Quiz (15)</th><th>Assg (15)</th><th>Attn (10)</th>
+                    <th>Midsem /20</th><th>Endsem /60</th><th>Quiz /20</th><th>Assg /10</th>
                     <th>Total / Grade</th>
                     <th>Action</th>
                   </tr>
@@ -149,7 +149,7 @@ export const TeacherMarks: React.FC = () => {
                           <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{m.student_id?.user_id?.name || '—'}</span>
                         </div>
                       </td>
-                      <td>{m.mid}</td><td>{m.quiz}</td><td>{m.assignment}</td><td>{m.attendance}</td>
+                      <td>{m.midsem}</td><td>{m.endsem}</td><td>{m.quiz}</td><td>{m.assignment}</td>
                       <td>
                         <div className="flex items-center gap-2">
                           <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{m.total}</span>
@@ -200,7 +200,7 @@ export const TeacherMarks: React.FC = () => {
                     {students.map((s: any) => <option key={s._id} value={s._id}>{s.user_id?.name}</option>)}
                   </select></div>
                 <div className="grid grid-cols-2 gap-4">
-                  {([['mid', 60], ['quiz', 15], ['assignment', 15], ['attendance', 10]] as [keyof typeof form, number][]).map(([field, max]) => (
+                  {([['midsem', 20], ['endsem', 60], ['quiz', 20], ['assignment', 10]] as [keyof typeof form, number][]).map(([field, max]) => (
                     <div key={field}><label className="form-label capitalize">{field} (max {max})</label>
                       <input type="number" min={0} max={max} className="form-input" required value={form[field]} onChange={e => setForm({ ...form, [field]: Number(e.target.value) })} /></div>
                   ))}

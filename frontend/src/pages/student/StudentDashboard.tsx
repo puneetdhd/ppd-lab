@@ -1,7 +1,8 @@
 import React from 'react';
 import { useApi } from '../../hooks/useApi';
 import { useAuth } from '../../context/AuthContext';
-import { Loader2, BookOpen, Award, TrendingUp } from 'lucide-react';
+import { Loader2, BookOpen, Award, TrendingUp, Download } from 'lucide-react';
+import { downloadStudentReport } from '../../utils/pdfReports';
 
 const GRADE_COLORS: Record<string, string> = {
   O: 'badge-success', E: 'badge-info', A: 'badge-accent',
@@ -23,6 +24,17 @@ export const StudentDashboard: React.FC = () => {
           <h1 className="page-title">Welcome back, {user?.name?.split(' ')[0]} 👋</h1>
           <div className="page-breadcrumb">Home / <span>My Dashboard</span></div>
         </div>
+        {list.length > 0 && (
+          <button
+            className="btn btn-primary"
+            onClick={() => downloadStudentReport(
+              { name: user?.name || 'Student', email: user?.email || '' },
+              list
+            )}
+          >
+            <Download size={16} /> Download Report Card
+          </button>
+        )}
       </div>
 
       {/* Stats */}

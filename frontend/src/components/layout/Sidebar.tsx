@@ -3,8 +3,8 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard, GraduationCap, Users,
-  BarChart3, LogOut,
-  ChevronRight, School, Award, ShieldCheck
+  BarChart3, ClipboardList, MessageSquare, LogOut,
+  ChevronRight, School, Award, ShieldCheck, FileUp, UserCheck
 } from 'lucide-react';
 
 interface NavItem {
@@ -17,14 +17,28 @@ interface NavItem {
 const NAV: Record<string, NavItem[]> = {
   admin: [
     { label: 'Home',       path: '/admin',             icon: LayoutDashboard },
-    { label: 'Students',   path: '/admin/students',    icon: GraduationCap },
-    { label: 'Teachers',   path: '/admin/teachers',    icon: Users },
-    { label: 'Subjects',   path: '/admin/subjects',    icon: School },
-    { label: 'Analytics',  path: '/admin/analytics',   icon: BarChart3 },
+    {
+      label: 'Students', path: '/admin/students', icon: GraduationCap,
+      children: [
+        { label: 'All Students',  path: '/admin/students' },
+        { label: 'Add via CSV',   path: '/admin/students/new' },
+      ]
+    },
+    {
+      label: 'Teachers', path: '/admin/teachers', icon: Users,
+      children: [
+        { label: 'All Teachers',  path: '/admin/teachers' },
+        { label: 'Add via CSV',   path: '/admin/teachers/new' },
+      ]
+    },
+    { label: 'Subjects',        path: '/admin/subjects',       icon: School },
+    { label: 'Assign Teachers', path: '/admin/assign-teachers', icon: UserCheck },
+    { label: 'Upload Marks',    path: '/admin/marks/upload',    icon: FileUp },
+    { label: 'Analytics',     path: '/admin/analytics',    icon: BarChart3 },
     {
       label: 'Performance', path: '/admin/performance', icon: BarChart3,
       children: [
-        { label: 'By Teacher', path: '/admin/performance/teacher' },
+        { label: 'By Subject', path: '/admin/performance/subject' },
         { label: 'By Branch',  path: '/admin/performance/branch' },
         { label: 'By Batch',   path: '/admin/performance/batch' },
       ]

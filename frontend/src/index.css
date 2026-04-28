@@ -240,17 +240,31 @@
 
   /* ── Modal ──────────────────────────────────────────── */
   .modal-overlay {
-    @apply fixed inset-0 z-50 flex items-center justify-center;
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4;
     background: rgba(0,0,0,.4);
     backdrop-filter: blur(4px);
+    overflow-y: auto;
   }
   .modal {
-    @apply card w-full max-w-lg mx-4;
+    @apply card w-full max-w-lg mx-auto;
     animation: modalIn .2s ease-out;
+    max-height: calc(100dvh - 2rem);
+    display: flex;
+    flex-direction: column;
   }
-  .modal-header { @apply flex items-center justify-between p-6 pb-4; }
-  .modal-body   { @apply px-6 pb-4; }
-  .modal-footer { @apply flex items-center justify-end gap-3 px-6 pb-6; }
+  .modal-header {
+    @apply flex items-center justify-between p-6 pb-4;
+    flex-shrink: 0;
+  }
+  .modal-body {
+    @apply px-6 pb-4;
+    overflow-y: auto;
+    flex: 1 1 auto;
+  }
+  .modal-footer {
+    @apply flex items-center justify-end gap-3 px-6 pb-6;
+    flex-shrink: 0;
+  }
 
   @keyframes modalIn {
     from { opacity: 0; transform: scale(.96) translateY(8px); }

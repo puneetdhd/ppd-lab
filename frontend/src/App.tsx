@@ -10,15 +10,19 @@ import { AdminBranches } from './pages/admin/AdminBranches';
 import { AdminBatches } from './pages/admin/AdminBatches';
 import { AdminSubjects } from './pages/admin/AdminSubjects';
 import { AdminTeachers } from './pages/admin/AdminTeachers';
+import { AdminTeachersAdd } from './pages/admin/AdminTeachersAdd';
+import { AdminAssignTeacher } from './pages/admin/AdminAssignTeacher';
 import { AdminStudents } from './pages/admin/AdminStudents';
 import { AdminStudentsAdd } from './pages/admin/AdminStudentsAdd';
 import { AdminAssignments } from './pages/admin/AdminAssignments';
 import { AdminAnalytics } from './pages/admin/AdminAnalytics';
 import { AdminFeedback } from './pages/admin/AdminFeedback';
 import { AdminCreateAdmin } from './pages/admin/AdminCreateAdmin';
+import { AdminMarksUpload } from './pages/admin/AdminMarksUpload';
 import { AdminPerformanceTeacher } from './pages/admin/AdminPerformanceTeacher';
 import { AdminPerformanceBranch } from './pages/admin/AdminPerformanceBranch';
 import { AdminPerformanceBatch } from './pages/admin/AdminPerformanceBatch';
+import { AdminPerformanceSubject } from './pages/admin/AdminPerformanceSubject';
 
 import { TeacherMarks } from './pages/teacher/TeacherMarks';
 import { TeacherAnalytics } from './pages/teacher/TeacherAnalytics';
@@ -44,10 +48,14 @@ function App() {
             <Route path="/admin/batches" element={<AdminBatches />} />
             <Route path="/admin/subjects" element={<AdminSubjects />} />
             <Route path="/admin/teachers" element={<AdminTeachers />} />
+            <Route path="/admin/teachers/new" element={<AdminTeachersAdd />} />
+            <Route path="/admin/assign-teachers" element={<AdminAssignTeacher />} />
             <Route path="/admin/students" element={<AdminStudents />} />
             <Route path="/admin/students/new" element={<AdminStudentsAdd />} />
             <Route path="/admin/assignments" element={<AdminAssignments />} />
             <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route path="/admin/marks/upload" element={<AdminMarksUpload />} />
+            <Route path="/admin/performance/subject" element={<AdminPerformanceSubject />} />
             <Route path="/admin/performance/teacher" element={<AdminPerformanceTeacher />} />
             <Route path="/admin/performance/branch" element={<AdminPerformanceBranch />} />
             <Route path="/admin/performance/batch" element={<AdminPerformanceBatch />} />

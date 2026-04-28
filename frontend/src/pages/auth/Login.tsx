@@ -96,8 +96,8 @@ export const Login: React.FC = () => {
         <div className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3">Quick Demo Login</div>
         <div className="grid grid-cols-3 gap-3">
           <button type="button" onClick={() => { setEmail('admin@ppd.edu'); setPassword('admin123'); }} className="text-xs bg-gray-100 py-2.5 rounded-lg font-bold uppercase tracking-wider text-gray-500 hover:bg-gray-200 transition-colors">Admin</button>
-          <button type="button" onClick={() => { setEmail('ramesh@ppd.edu'); setPassword('teacher123'); }} className="text-xs bg-gray-100 py-2.5 rounded-lg font-bold uppercase tracking-wider text-gray-500 hover:bg-gray-200 transition-colors">Teacher</button>
-          <button type="button" onClick={() => { setEmail('s1@ppd.edu'); setPassword('student123'); }} className="text-xs bg-gray-100 py-2.5 rounded-lg font-bold uppercase tracking-wider text-gray-500 hover:bg-gray-200 transition-colors">Student</button>
+          <button type="button" onClick={() => { setEmail('teacher26@ppd.edu'); setPassword('teacher26'); }} className="text-xs bg-gray-100 py-2.5 rounded-lg font-bold uppercase tracking-wider text-gray-500 hover:bg-gray-200 transition-colors">Teacher</button>
+          <button type="button" onClick={() => { setEmail('student5@ppd.edu'); setPassword('student5'); }} className="text-xs bg-gray-100 py-2.5 rounded-lg font-bold uppercase tracking-wider text-gray-500 hover:bg-gray-200 transition-colors">Student</button>
         </div>
       </div>
 

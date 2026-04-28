@@ -1,15 +1,18 @@
 import React from 'react';
 import { useApi } from '../../hooks/useApi';
-import { Loader2 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Loader2, Download } from 'lucide-react';
 import {
   PieChart, Pie, Cell, Legend, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer
 } from 'recharts';
+import { downloadTeacherReport } from '../../utils/pdfReports';
 
 const COLORS = ['#7c3aed', '#009ef7', '#50cd89', '#ffc700', '#f1416c', '#a78bfa', '#fb923c'];
 
 export const TeacherAnalytics: React.FC = () => {
   const { data, loading, error } = useApi<any[]>('/analysis/my');
+  const { user } = useAuth();
 
   if (loading) return <div className="flex items-center justify-center h-64"><Loader2 size={28} className="animate-spin" style={{ color: 'var(--accent)' }} /></div>;
   if (error)   return <div className="p-4 rounded-xl text-sm" style={{ background: 'var(--danger-light)', color: 'var(--danger)' }}>{error}</div>;
@@ -22,6 +25,15 @@ export const TeacherAnalytics: React.FC = () => {
           <h1 className="page-title">Class Analytics</h1>
           <div className="page-breadcrumb">Home / Teacher / <span>Analytics</span></div>
         </div>
+        <button
+          className="btn btn-primary"
+          onClick={() => downloadTeacherReport(
+            { name: user?.name || 'Teacher', email: user?.email || '' },
+            data || []
+          )}
+        >
+          <Download size={16} /> Download Report
+        </button>
       </div>
 
       {data.map((analysis: any, idx: number) => {
