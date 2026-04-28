@@ -220,7 +220,7 @@ export const AdminPerformanceSubject: React.FC = () => {
                 <YAxis axisLine={false} tickLine={false}
                   tick={{ fontSize: 11, fill: 'var(--text-muted)' }} allowDecimals={false} />
                 <Tooltip
-                  formatter={(val: any, name: string, props: any) => [val, name]}
+                  formatter={(val: any, name: any) => [val, name]}
                   labelFormatter={(label, payload) => payload?.[0]?.payload?.fullName || label}
                   contentStyle={{ borderRadius: 10, border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}
                 />

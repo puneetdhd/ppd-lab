@@ -292,7 +292,6 @@ export function downloadAdminReport(
   ].filter(Boolean).join('  ·  ') || 'All Branches & Batches';
 
   // Landscape header
-  const doc2 = doc as any;
   let y = 6;
   doc.setFillColor(...ACCENT);
   doc.rect(0, 0, 297, 22, 'F');
